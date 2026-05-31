@@ -30,23 +30,48 @@ const HARDWARE = [
   { id: 'dgx_b200', vendor: 'NVIDIA', name: 'DGX B200 (8× B200)', vram: 1536, price: 515000, tflops_fp16: 18000, bandwidth_gbs: 64000, power: 14300, category: 'dgx', units: 8, note: '8× B200 192GB, NVLink 5' },
   { id: 'gb200_nvl72', vendor: 'NVIDIA', name: 'GB200 NVL72 (rack)', vram: 13824, price: 3000000, tflops_fp16: 180000, bandwidth_gbs: 576000, power: 120000, category: 'dgx', units: 72, note: '72× B200 + 36× Grace CPU, full rack' },
   // Apple
-  { id: 'm2_ultra_192', vendor: 'Apple', name: 'Mac Studio M2 Ultra 192GB', vram: 147, price: 6200, tflops_fp16: 27, bandwidth_gbs: 800, power: 295, category: 'apple', totalRam: 192 },
-  { id: 'm4_max_128', vendor: 'Apple', name: 'MacBook Pro M4 Max 128GB', vram: 98, price: 4700, tflops_fp16: 34, bandwidth_gbs: 546, power: 140, category: 'apple', totalRam: 128 },
-  { id: 'm4_pro_48', vendor: 'Apple', name: 'Mac Mini M4 Pro 64GB', vram: 48, price: 2200, tflops_fp16: 17, bandwidth_gbs: 273, power: 65, category: 'apple', totalRam: 64 },
-  { id: 'm3_ultra_512', vendor: 'Apple', name: 'Mac Studio M3 Ultra 512GB', vram: 384, price: 9500, tflops_fp16: 43, bandwidth_gbs: 819, power: 270, category: 'apple', totalRam: 512 },
-  { id: 'm3_max_128', vendor: 'Apple', name: 'MacBook Pro M3 Max 128GB', vram: 98, price: 4500, tflops_fp16: 28, bandwidth_gbs: 400, power: 140, category: 'apple', totalRam: 128 },
+  // Mac mini M4 / M4 Pro (popular as local AI server — small, efficient, unified memory)
+  { id: 'mini_m4_16', vendor: 'Apple', name: 'Mac mini M4 16GB', vram: 12, price: 599, tflops_fp16: 8, bandwidth_gbs: 120, power: 65, category: 'apple', totalRam: 16 },
+  { id: 'mini_m4_24', vendor: 'Apple', name: 'Mac mini M4 24GB', vram: 18, price: 799, tflops_fp16: 8, bandwidth_gbs: 120, power: 65, category: 'apple', totalRam: 24 },
+  { id: 'mini_m4_32', vendor: 'Apple', name: 'Mac mini M4 32GB', vram: 24, price: 999, tflops_fp16: 8, bandwidth_gbs: 120, power: 65, category: 'apple', totalRam: 32 },
+  { id: 'mini_m4pro_24', vendor: 'Apple', name: 'Mac mini M4 Pro 24GB', vram: 18, price: 1399, tflops_fp16: 17, bandwidth_gbs: 273, power: 65, category: 'apple', totalRam: 24 },
+  { id: 'mini_m4pro_48', vendor: 'Apple', name: 'Mac mini M4 Pro 48GB', vram: 36, price: 1799, tflops_fp16: 17, bandwidth_gbs: 273, power: 65, category: 'apple', totalRam: 48 },
+  { id: 'mini_m4pro_64', vendor: 'Apple', name: 'Mac mini M4 Pro 64GB', vram: 48, price: 2199, tflops_fp16: 17, bandwidth_gbs: 273, power: 65, category: 'apple', totalRam: 64 },
+  // MacBook Pro
+  { id: 'mbp_m4max_128', vendor: 'Apple', name: 'MacBook Pro M4 Max 128GB', vram: 98, price: 4700, tflops_fp16: 34, bandwidth_gbs: 546, power: 140, category: 'apple', totalRam: 128 },
+  { id: 'mbp_m3max_128', vendor: 'Apple', name: 'MacBook Pro M3 Max 128GB', vram: 98, price: 4500, tflops_fp16: 28, bandwidth_gbs: 400, power: 140, category: 'apple', totalRam: 128 },
+  // Mac Studio
+  { id: 'studio_m4max_64', vendor: 'Apple', name: 'Mac Studio M4 Max 64GB', vram: 48, price: 1999, tflops_fp16: 34, bandwidth_gbs: 546, power: 160, category: 'apple', totalRam: 64 },
+  { id: 'studio_m4max_128', vendor: 'Apple', name: 'Mac Studio M4 Max 128GB', vram: 98, price: 3499, tflops_fp16: 34, bandwidth_gbs: 546, power: 160, category: 'apple', totalRam: 128 },
+  { id: 'studio_m2ultra_192', vendor: 'Apple', name: 'Mac Studio M2 Ultra 192GB', vram: 147, price: 6200, tflops_fp16: 27, bandwidth_gbs: 800, power: 295, category: 'apple', totalRam: 192 },
+  { id: 'studio_m3ultra_256', vendor: 'Apple', name: 'Mac Studio M3 Ultra 256GB', vram: 192, price: 5599, tflops_fp16: 43, bandwidth_gbs: 819, power: 270, category: 'apple', totalRam: 256 },
+  { id: 'studio_m3ultra_512', vendor: 'Apple', name: 'Mac Studio M3 Ultra 512GB', vram: 384, price: 9499, tflops_fp16: 43, bandwidth_gbs: 819, power: 270, category: 'apple', totalRam: 512 },
 ];
 
 // Known models as fallback (when HF API fails or doesn't know size)
+// activeParams (optional): for MoE models, the params active per token.
+// If omitted, model is treated as dense (active = total).
 const KNOWN_MODELS = [
+  // Qwen 3.5 (MoE & dense)
+  { id: 'qwen-3.5-35b-a3b', name: 'Qwen 3.5 35B-A3B (MoE)', params: 35, activeParams: 3 },
+  { id: 'qwen-3.5-235b-a22b', name: 'Qwen 3.5 235B-A22B (MoE)', params: 235, activeParams: 22 },
+  { id: 'qwen-3.5-72b', name: 'Qwen 3.5 72B', params: 72 },
+  // Qwen 3
   { id: 'qwen-3-32b', name: 'Qwen 3 32B', params: 32 },
   { id: 'qwen-3-72b', name: 'Qwen 3 72B', params: 72 },
   { id: 'qwen-3-14b', name: 'Qwen 3 14B', params: 14 },
+  // Llama
   { id: 'llama-3.3-70b', name: 'Llama 3.3 70B', params: 70 },
   { id: 'llama-3.1-8b', name: 'Llama 3.1 8B', params: 8 },
+  { id: 'llama-3.1-405b', name: 'Llama 3.1 405B', params: 405 },
+  // Mistral / Mixtral
   { id: 'mistral-large', name: 'Mistral Large 2', params: 123 },
-  { id: 'mixtral-8x7b', name: 'Mixtral 8x7B', params: 47 },
-  { id: 'deepseek-v3', name: 'DeepSeek V3', params: 685 },
+  { id: 'mixtral-8x7b', name: 'Mixtral 8x7B (MoE)', params: 47, activeParams: 13 },
+  { id: 'mixtral-8x22b', name: 'Mixtral 8x22B (MoE)', params: 141, activeParams: 39 },
+  // DeepSeek
+  { id: 'deepseek-v3', name: 'DeepSeek V3 (MoE)', params: 685, activeParams: 37 },
+  { id: 'deepseek-r1', name: 'DeepSeek R1 (MoE)', params: 685, activeParams: 37 },
+  // Others
   { id: 'gemma-2-27b', name: 'Gemma 2 27B', params: 27 },
   { id: 'phi-4', name: 'Phi 4', params: 14 },
   { id: 'command-r-plus', name: 'Command R+', params: 104 },
@@ -108,39 +133,46 @@ function calcVRAM(params, quantId, context, mode, batchSize = 1) {
   };
 }
 
-// Calculate prefill (prompt processing) and decode (generation) times
-// Returns ms per token for decode, total ms for prefill
-function calcLatency(params, quantId, promptTokens, outputTokens, hw, hwCount = 1) {
+// Calculate prefill (prompt processing) and decode (generation) times.
+// For MoE models, pass activeParams (params per token) separately from total params.
+// - VRAM/weights uses total params (all experts loaded in memory).
+// - Decode bandwidth read uses ACTIVE params only (only routed experts are read per token).
+// - Prefill compute uses ACTIVE params (MoE FLOPs scale with active, not total).
+function calcLatency(params, quantId, promptTokens, outputTokens, hw, hwCount = 1, activeParams = null) {
   const quant = QUANT_OPTIONS.find(q => q.id === quantId) || QUANT_OPTIONS[0];
-  const modelSizeGB = params * quant.bytesPerParam; // in GB
-  
+  // For MoE: use active params for per-token math. For dense: active = total.
+  const computeParams = activeParams ?? params;
+  const decodeReadGB = computeParams * quant.bytesPerParam;
+  const isMoE = activeParams != null && activeParams < params;
+
   // Multi-GPU scaling (tensor parallelism)
   const tpScale = hwCount === 1 ? 1 : Math.pow(hwCount, 0.85);
   const effectiveTflops = hw.tflops_fp16 * tpScale;
   const effectiveBandwidth = hw.bandwidth_gbs * tpScale;
-  
+
   // ===== PREFILL =====
-  // Compute-bound: process entire prompt at once
-  // FLOPs ≈ 2 × params × prompt_tokens (matrix multiplies)
-  // Apply ~30% efficiency factor (real-world vs theoretical peak)
+  // Compute-bound: process entire prompt at once.
+  // FLOPs ≈ 2 × active_params × prompt_tokens (for MoE, only active experts compute).
+  // 30% efficiency vs theoretical peak (FlashAttention, real-world utilization).
   const efficiency = 0.3;
-  const prefillFlops = 2 * params * 1e9 * promptTokens;
+  const prefillFlops = 2 * computeParams * 1e9 * promptTokens;
   const prefillSeconds = prefillFlops / (effectiveTflops * 1e12 * efficiency);
   const prefillMs = prefillSeconds * 1000;
-  
+
   // ===== DECODE =====
-  // Memory-bandwidth bound: need to read all model weights per token
-  // Time per token = model_size / bandwidth (with some efficiency factor)
-  const decodeEfficiency = 0.7; // memory subsystem is efficient
-  const msPerToken = (modelSizeGB / (effectiveBandwidth * decodeEfficiency)) * 1000;
+  // Memory-bandwidth bound: read active weights per token.
+  // Dense: efficiency ≈ 0.7. MoE: much lower (~0.2) due to expert routing overhead,
+  // scattered memory access (experts aren't contiguous), and unoptimized MoE kernels
+  // outside of vLLM/SGLang. Calibrated against Qwen 3.5 35B-A3B Q4 on Mac mini M4
+  // measuring ~35 tok/s vs theoretical max ~127 tok/s.
+  const decodeEfficiency = isMoE ? 0.2 : 0.7;
+  const msPerToken = (decodeReadGB / (effectiveBandwidth * decodeEfficiency)) * 1000;
   const tokensPerSec = 1000 / msPerToken;
   const decodeTotalMs = msPerToken * outputTokens;
-  
-  // Time to first token = prefill time
-  // Total time = prefill + decode
+
   const ttft = prefillMs;
   const totalMs = prefillMs + decodeTotalMs;
-  
+
   return {
     prefillMs,
     decodeTotalMs,
@@ -216,6 +248,7 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
   const selectModel = async (hfModel) => {
     // try to get details including safetensors info for exact params
     let params = paramsFromName(hfModel.id);
+    let activeParams = null;
     try {
       const res = await fetch(`https://huggingface.co/api/models/${hfModel.id}`);
       const detail = await res.json();
@@ -227,14 +260,28 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
     } catch (e) {
       if (!params) params = 7;
     }
-    onUpdate({ ...model, name: hfModel.id, params, source: 'huggingface' });
+    // Detect MoE active params from name patterns:
+    //   "35B-A3B"  → total 35B, active 3B
+    //   "235B-A22B" → total 235B, active 22B
+    //   "8x7B"     → 8 experts of 7B (active ≈ 2 experts ≈ 13B for Mixtral-style top-2 routing)
+    const aMatch = hfModel.id.match(/(\d+(?:\.\d+)?)\s*[bB][-_]?A(\d+(?:\.\d+)?)\s*[bB]/i);
+    if (aMatch) {
+      activeParams = parseFloat(aMatch[2]);
+    } else {
+      const moeMatch = hfModel.id.match(/(\d+)x(\d+(?:\.\d+)?)\s*[bB]/i);
+      if (moeMatch) {
+        // Top-2 routing typical for Mixtral-style: 2 experts active per token
+        activeParams = 2 * parseFloat(moeMatch[2]);
+      }
+    }
+    onUpdate({ ...model, name: hfModel.id, params, activeParams, source: 'huggingface' });
     setShowSearch(false);
     setSearchQuery('');
     setSearchResults([]);
   };
 
   const selectKnown = (km) => {
-    onUpdate({ ...model, name: km.name, params: km.params, source: 'preset' });
+    onUpdate({ ...model, name: km.name, params: km.params, activeParams: km.activeParams ?? null, source: 'preset' });
     setShowSearch(false);
   };
 
@@ -257,6 +304,9 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
           <div className="font-serif text-lg text-neutral-100 break-all">{model.name}</div>
           <div className="text-xs text-neutral-400 mt-1">
             {model.params}B parameters
+            {model.activeParams && model.activeParams < model.params && (
+              <span className="ml-2 text-orange-400">· MoE: {model.activeParams}B active/token</span>
+            )}
             {model.source === 'huggingface' && <span className="ml-2 text-amber-500/80">· HF</span>}
             {model.source === 'preset' && <span className="ml-2 text-neutral-500">· preset</span>}
           </div>
@@ -404,15 +454,20 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
   );
 }
 
-function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRate, promptTokens, outputTokens, modelParams, modelQuant }) {
+function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRate, promptTokens, outputTokens, modelParams, modelQuant, modelActiveParams, appleCluster }) {
   // How many units of this HW are needed to fit the model(s)?
-  // Apple machines + DGX can't be stacked further (DGX is already a box)
-  const canMultiGPU = hw.vendor === 'NVIDIA' && hw.category !== 'dgx';
+  // NVIDIA standalone cards: stack via tensor parallelism
+  // Apple machines: stack via EXO / llama.cpp RPC (only if appleCluster=true; performance penalty is severe)
+  // DGX systems: already a box, can't be further stacked here
+  const canMultiGPU = (hw.vendor === 'NVIDIA' && hw.category !== 'dgx') || (hw.vendor === 'Apple' && appleCluster);
   const rawNeeded = totalVRAM > 0 ? Math.ceil(totalVRAM / hw.vram) : 1;
   const needed = canMultiGPU ? rawNeeded : 1;
   const fits = canMultiGPU ? true : hw.vram >= totalVRAM;
-  // When using multiple GPUs, ~10-15% is lost to tensor parallelism overhead per extra GPU
-  const effectiveVRAM = hw.vram * needed * (needed === 1 ? 1 : 1 - 0.1 * (needed - 1) / needed);
+  // VRAM loss per extra unit:
+  //   NVIDIA tensor parallelism: ~10% per extra GPU (NVLink/PCIe overhead)
+  //   Apple cluster (Thunderbolt/Ethernet): ~15% per extra machine (replication, framework state)
+  const vramOverhead = hw.vendor === 'Apple' ? 0.15 : 0.1;
+  const effectiveVRAM = hw.vram * needed * (needed === 1 ? 1 : 1 - vramOverhead * (needed - 1) / needed);
   const reallyFits = effectiveVRAM >= totalVRAM;
   const headroom = totalVRAM > 0 ? ((effectiveVRAM - totalVRAM) / effectiveVRAM) * 100 : 0;
   const totalPrice = hw.price * needed;
@@ -421,11 +476,35 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
   // For DGX systems, internal multi-GPU is already accounted for - treat units as the scaling factor
   const internalGpus = hw.units || 1;
   // Latency calculations
-  const latency = modelParams ? calcLatency(modelParams, modelQuant, promptTokens, outputTokens, hw, Math.max(needed, internalGpus)) : null;
+  // For Apple clusters, the latency calc is heavily impacted by Thunderbolt bandwidth (40 Gbps ≈ 5 GB/s) between machines.
+  // The effective bandwidth becomes min(per_unit_bandwidth, interconnect_bandwidth) for cross-machine traffic.
+  // Simplification: apply a steeper scaling penalty (0.5 exponent) for Apple clusters vs 0.85 for NVIDIA.
+  const latency = modelParams
+    ? (() => {
+        const base = calcLatency(modelParams, modelQuant, promptTokens, outputTokens, hw, Math.max(needed, internalGpus), modelActiveParams);
+        if (hw.vendor === 'Apple' && needed > 1) {
+          // Apple cluster scaling: Thunderbolt 4/5 (40-80 Gbps) is much slower than NVLink (7,200 Gbps).
+          // Per-layer activations must cross the network. Pipeline parallelism + ring scheduling
+          // (EXO, llama.cpp RPC) help, but bandwidth caps real-world scaling.
+          // Recent EXO benchmarks: 2× nodes ≈ 1.4× speed, 4× ≈ 2.1× speed.
+          const naiveScale = Math.pow(needed, 0.85);
+          const realScale = Math.pow(needed, 0.55);
+          const ratio = realScale / naiveScale;
+          return {
+            ...base,
+            tokensPerSec: base.tokensPerSec * ratio,
+            msPerToken: base.msPerToken / ratio,
+            prefillMs: base.prefillMs / ratio,
+          };
+        }
+        return base;
+      })()
+    : null;
   const yearlyKwh = (totalPower / 1000) * 24 * 30 * runtimeMonths * 0.5;
   const electricityCost = yearlyKwh * electricityRate;
   const totalCost = totalPrice + electricityCost;
   const links = getRetailerLinks(hw);
+  const isAppleCluster = hw.vendor === 'Apple' && needed > 1;
 
   return (
     <div className={`grid grid-cols-12 gap-2 px-3 py-2.5 border-b border-neutral-800 text-sm items-center ${reallyFits ? '' : 'opacity-40'}`}>
@@ -442,7 +521,8 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
           </div>
           <div className="text-xs text-neutral-500 font-mono uppercase tracking-wider">
             {hw.vendor} · {hw.category}
-            {needed > 1 && <span className="text-amber-500/70 ml-1">· multi-GPU</span>}
+            {needed > 1 && !isAppleCluster && <span className="text-amber-500/70 ml-1">· multi-GPU</span>}
+            {isAppleCluster && <span className="text-orange-400/80 ml-1" title="EXO/llama.cpp RPC over Thunderbolt — significant performance penalty">· cluster ⚠</span>}
           </div>
         </div>
       </div>
@@ -495,7 +575,7 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
 
 export default function App() {
   const [models, setModels] = useState([
-    { id: 1, name: '', params: 0, quant: 'fp16', context: 8192, source: null },
+    { id: 1, name: '', params: 0, quant: 'fp16', context: 8192, source: null, activeParams: null },
   ]);
   const [calcMode, setCalcMode] = useState('detailed'); // simple | detailed
   const [concurrent, setConcurrent] = useState(true);
@@ -506,9 +586,10 @@ export default function App() {
   const [sortBy, setSortBy] = useState('price');
   const [promptTokens, setPromptTokens] = useState(1024);
   const [outputTokens, setOutputTokens] = useState(256);
+  const [appleCluster, setAppleCluster] = useState(false); // allow stacking Apple machines via EXO/llama.cpp RPC
 
   const addModel = () => {
-    setModels([...models, { id: Date.now(), name: '', params: 0, quant: 'fp16', context: 8192, source: null }]);
+    setModels([...models, { id: Date.now(), name: '', params: 0, quant: 'fp16', context: 8192, source: null, activeParams: null }]);
   };
 
   const updateModel = (id, updated) => {
@@ -550,12 +631,13 @@ export default function App() {
     if (categoryFilter !== 'all') hw = hw.filter(h => h.category === categoryFilter);
     
     // Helper: how many of this HW are needed
+    const canStack = (h) => (h.vendor === 'NVIDIA' && h.category !== 'dgx') || (h.vendor === 'Apple' && appleCluster);
     const neededCount = (h) => {
-      if (h.vendor !== 'NVIDIA' || h.category === 'dgx') return 1; // Apple + DGX = single unit
+      if (!canStack(h)) return 1;
       return totalVRAM > 0 ? Math.ceil(totalVRAM / h.vram) : 1;
     };
     const fitsScaled = (h) => {
-      if (h.vendor === 'NVIDIA' && h.category !== 'dgx') return true; // can always stack consumer/datacenter GPUs
+      if (canStack(h)) return true;
       return h.vram >= totalVRAM;
     };
 
@@ -571,16 +653,17 @@ export default function App() {
       const bPower = b.power * bN;
       if (sortBy === 'price') return aPrice - bPrice;
       if (sortBy === 'vram') return (b.vram * bN) - (a.vram * aN);
+      if (sortBy === 'costPerGB') return (aPrice / (a.vram * aN)) - (bPrice / (b.vram * bN));
       if (sortBy === 'perf') return b.tflops_fp16 - a.tflops_fp16;
       if (sortBy === 'bandwidth') return b.bandwidth_gbs - a.bandwidth_gbs;
       if (sortBy === 'prefill' && primaryModel) {
-        const aL = calcLatency(primaryModel.params, primaryModel.quant, promptTokens, outputTokens, a, Math.max(aN, a.units || 1));
-        const bL = calcLatency(primaryModel.params, primaryModel.quant, promptTokens, outputTokens, b, Math.max(bN, b.units || 1));
+        const aL = calcLatency(primaryModel.params, primaryModel.quant, promptTokens, outputTokens, a, Math.max(aN, a.units || 1), primaryModel.activeParams);
+        const bL = calcLatency(primaryModel.params, primaryModel.quant, promptTokens, outputTokens, b, Math.max(bN, b.units || 1), primaryModel.activeParams);
         return aL.prefillMs - bL.prefillMs;
       }
       if (sortBy === 'decode' && primaryModel) {
-        const aL = calcLatency(primaryModel.params, primaryModel.quant, promptTokens, outputTokens, a, Math.max(aN, a.units || 1));
-        const bL = calcLatency(primaryModel.params, primaryModel.quant, promptTokens, outputTokens, b, Math.max(bN, b.units || 1));
+        const aL = calcLatency(primaryModel.params, primaryModel.quant, promptTokens, outputTokens, a, Math.max(aN, a.units || 1), primaryModel.activeParams);
+        const bL = calcLatency(primaryModel.params, primaryModel.quant, promptTokens, outputTokens, b, Math.max(bN, b.units || 1), primaryModel.activeParams);
         return bL.tokensPerSec - aL.tokensPerSec;
       }
       if (sortBy === 'power') return aPower - bPower;
@@ -592,19 +675,20 @@ export default function App() {
       return 0;
     });
     return hw;
-  }, [vendorFilter, categoryFilter, sortBy, totalVRAM, runtimeMonths, electricityRate, promptTokens, outputTokens, primaryModel]);
+  }, [vendorFilter, categoryFilter, sortBy, totalVRAM, runtimeMonths, electricityRate, promptTokens, outputTokens, primaryModel, appleCluster]);
 
   // Find best (cheapest) fit considering multi-GPU configs
   const bestPick = useMemo(() => {
+    const canStack = (h) => (h.vendor === 'NVIDIA' && h.category !== 'dgx') || (h.vendor === 'Apple' && appleCluster);
     const candidates = filteredHW
-      .filter(h => (h.vendor === 'NVIDIA' && h.category !== 'dgx') || h.vram >= totalVRAM)
+      .filter(h => canStack(h) || h.vram >= totalVRAM)
       .map(h => {
-        const n = (h.vendor === 'NVIDIA' && h.category !== 'dgx') && totalVRAM > 0 ? Math.ceil(totalVRAM / h.vram) : 1;
+        const n = canStack(h) && totalVRAM > 0 ? Math.ceil(totalVRAM / h.vram) : 1;
         return { hw: h, count: n, totalPrice: h.price * n };
       });
     candidates.sort((a, b) => a.totalPrice - b.totalPrice);
     return candidates[0];
-  }, [filteredHW, totalVRAM]);
+  }, [filteredHW, totalVRAM, appleCluster]);
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
@@ -840,7 +924,7 @@ export default function App() {
             <span className="text-amber-500">02.</span> Hardware comparison
           </h2>
           <div className="text-xs text-neutral-500 font-mono">
-            {filteredHW.filter(h => (h.vendor === 'NVIDIA' && h.category !== 'dgx') || h.vram >= totalVRAM).length} / {filteredHW.length} fit
+            {filteredHW.filter(h => ((h.vendor === 'NVIDIA' && h.category !== 'dgx') || (h.vendor === 'Apple' && appleCluster)) || h.vram >= totalVRAM).length} / {filteredHW.length} fit
             {totalVRAM > 0 && <span className="ml-2 text-amber-500/70">· need {fmt(totalVRAM, 1)}GB total</span>}
           </div>
         </div>
@@ -871,7 +955,23 @@ export default function App() {
               </button>
             ))}
           </div>
+          <label className="flex gap-1.5 ml-2 items-center cursor-pointer" title="Cluster Apple machines via EXO / llama.cpp RPC over Thunderbolt. Significant performance penalty.">
+            <button
+              onClick={() => setAppleCluster(!appleCluster)}
+              className={`w-8 h-4 rounded-full relative transition-colors ${appleCluster ? 'bg-orange-500' : 'bg-neutral-700'}`}
+            >
+              <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-neutral-950 transition-transform ${appleCluster ? 'translate-x-4' : 'translate-x-0.5'}`}></div>
+            </button>
+            <span className={`text-xs font-mono uppercase tracking-wider ${appleCluster ? 'text-orange-400' : 'text-neutral-500'}`}>
+              Apple cluster {appleCluster && '⚠'}
+            </span>
+          </label>
         </div>
+        {appleCluster && (
+          <div className="text-xs text-orange-400/80 mb-3 -mt-2 leading-relaxed">
+            ⚠ Apple machines clustered via <a href="https://github.com/exo-explore/exo" target="_blank" rel="noopener noreferrer" className="text-orange-300 underline">EXO</a> or llama.cpp RPC over Thunderbolt. Sublinear scaling: 2 nodes ≈ 1.4× speed, 4 nodes ≈ 2.1× speed (Thunderbolt bandwidth is ~80× slower than NVLink). Great for fitting huge models you couldn't otherwise run; not great if you need maximum tok/s.
+          </div>
+        )}
 
         {/* Table */}
         <div className="border border-neutral-800 bg-neutral-900/30">
@@ -879,7 +979,7 @@ export default function App() {
             <button onClick={() => setSortBy('name')} className="col-span-2 text-left">Hardware</button>
             <button onClick={() => setSortBy('vram')} className="col-span-1 text-right hover:text-amber-500">VRAM {sortBy === 'vram' && '↓'}</button>
             <button onClick={() => setSortBy('price')} className="col-span-2 text-right hover:text-amber-500">Price {sortBy === 'price' && '↓'}</button>
-            <div className="col-span-1 text-right">$/GB</div>
+            <button onClick={() => setSortBy('costPerGB')} className="col-span-1 text-right hover:text-amber-500">$/GB {sortBy === 'costPerGB' && '↓'}</button>
             <button onClick={() => setSortBy('bandwidth')} className="col-span-1 text-right hover:text-amber-500">Mem BW {sortBy === 'bandwidth' && '↓'}</button>
             <button onClick={() => setSortBy('prefill')} className="col-span-1 text-right hover:text-amber-500">Prefill {sortBy === 'prefill' && '↓'}</button>
             <button onClick={() => setSortBy('decode')} className="col-span-1 text-right hover:text-amber-500">Decode {sortBy === 'decode' && '↓'}</button>
@@ -899,6 +999,8 @@ export default function App() {
               outputTokens={outputTokens}
               modelParams={primaryModel ? primaryModel.params : 0}
               modelQuant={primaryModel ? primaryModel.quant : 'fp16'}
+              modelActiveParams={primaryModel ? primaryModel.activeParams : null}
+              appleCluster={appleCluster}
             />
           ))}
         </div>
@@ -906,8 +1008,9 @@ export default function App() {
         <div className="mt-6 text-xs text-neutral-500 space-y-1 leading-relaxed border-t border-neutral-800 pt-4">
           <div><span className="text-amber-500">★</span> <strong className="text-neutral-300">Prefill (TTFT)</strong> = time to process the prompt before generating first token. Compute-bound (depends on TFLOPS). Scales linearly with prompt length.</div>
           <div><span className="text-amber-500">★</span> <strong className="text-neutral-300">Decode</strong> = how fast tokens stream out after prefill. Memory-bandwidth-bound (depends on VRAM bandwidth, not TFLOPS). Roughly constant regardless of context length.</div>
+          <div><span className="text-amber-500">★</span> <strong className="text-neutral-300">MoE models</strong> (Mixtral, Qwen 3.5 35B-A3B, DeepSeek V3) keep all experts in VRAM but read only the active subset per token, so decode is much faster than param count suggests. Decode efficiency is much lower (~0.2 vs 0.7 dense) due to expert routing overhead and scattered memory access. Calibrated against Qwen 3.5 35B-A3B Q4 on Mac mini M4 measured at ~35 tok/s.</div>
           <div><span className="text-amber-500">★</span> <strong className="text-neutral-300">DGX systems</strong> are turnkey 8-GPU servers (or 72-GPU racks for GB200 NVL72). They can't be further stacked in this calc — pick a bigger DGX if one isn't enough.</div>
-          <div><span className="text-amber-500">★</span> <strong className="text-neutral-300">Multi-GPU</strong>: standalone NVIDIA cards can be stacked (shown as 2×, 3× etc.) — assumes tensor parallelism via NVLink/PCIe. ~10% VRAM lost per extra GPU, scaling efficiency ~85% per added card. Apple machines can't be combined.</div>
+          <div><span className="text-amber-500">★</span> <strong className="text-neutral-300">Multi-GPU</strong>: standalone NVIDIA cards stack via tensor parallelism over NVLink/PCIe (~85% scaling efficiency). Apple machines can be clustered via <a href="https://github.com/exo-explore/exo" target="_blank" rel="noopener noreferrer" className="text-orange-400 underline">EXO</a> or llama.cpp RPC over Thunderbolt — toggle the <em>Apple cluster</em> switch above, but expect 2-5× worse decode performance per node than single-machine setups.</div>
           <div><span className="text-amber-500">★</span> Latency uses the <em>largest</em> selected model as reference. Real-world numbers depend on inference framework (vLLM, SGLang, llama.cpp, MLX), batch size, and attention impl (flash attn, paged attn).</div>
           <div><span className="text-amber-500">★</span> Price links (amzn / newegg / ebay / apple) open a search in a new tab.</div>
           <div><span className="text-amber-500">★</span> Apple unified memory: usable VRAM ≈ 75% of total RAM (reserve for system).</div>
