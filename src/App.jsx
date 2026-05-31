@@ -188,12 +188,22 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
   const [searching, setSearching] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
 
+  const [sortMode, setSortMode] = useState('trending'); // 'trending' | 'newest' | 'downloads'
+
   const searchHF = async () => {
     if (!searchQuery.trim()) return;
     setSearching(true);
     try {
+      // No pipeline filter — many new/MoE/custom-code models don't set it,
+      // and we'd rather show too many than hide new releases.
+      // Sort options: trending (default), newest (lastModified), downloads (most popular).
+      const sortParam = sortMode === 'newest'
+        ? 'lastModified'
+        : sortMode === 'downloads'
+        ? 'downloads'
+        : 'trendingScore';
       const res = await fetch(
-        `https://huggingface.co/api/models?search=${encodeURIComponent(searchQuery)}&filter=text-generation&limit=10&sort=downloads&direction=-1`
+        `https://huggingface.co/api/models?search=${encodeURIComponent(searchQuery)}&limit=25&sort=${sortParam}&direction=-1`
       );
       const data = await res.json();
       setSearchResults(data);
@@ -286,17 +296,60 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
             </button>
           </div>
 
+          <div className="flex gap-1 mb-2 text-xs">
+            <span className="text-neutral-500 font-mono uppercase self-center mr-1">sort:</span>
+            {[
+              { id: 'trending', label: 'trending' },
+              { id: 'newest', label: 'newest' },
+              { id: 'downloads', label: 'popular' },
+            ].map(opt => (
+              <button
+                key={opt.id}
+                onClick={() => setSortMode(opt.id)}
+                className={`px-2 py-0.5 font-mono ${sortMode === opt.id ? 'bg-amber-500 text-neutral-950' : 'border border-neutral-700 text-neutral-400 hover:text-amber-500'}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+            <a
+              href={`https://huggingface.co/models?search=${encodeURIComponent(searchQuery)}&sort=modified`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto text-neutral-500 hover:text-amber-500 underline decoration-dotted self-center"
+              title="Browse on HuggingFace directly"
+            >
+              browse on HF ↗
+            </a>
+          </div>
+
           {searchResults.length > 0 && (
-            <div className="max-h-40 overflow-y-auto space-y-1 mb-3">
-              {searchResults.map((r) => (
-                <button
-                  key={r.id}
-                  onClick={() => selectModel(r)}
-                  className="block w-full text-left text-xs text-neutral-300 hover:bg-neutral-800 px-2 py-1 truncate"
-                >
-                  {r.id} <span className="text-neutral-500">↓{r.downloads}</span>
-                </button>
-              ))}
+            <div className="max-h-56 overflow-y-auto space-y-1 mb-3 border border-neutral-800">
+              {searchResults.map((r) => {
+                const modified = r.lastModified ? new Date(r.lastModified) : null;
+                const daysAgo = modified ? Math.floor((Date.now() - modified.getTime()) / (1000 * 60 * 60 * 24)) : null;
+                const dateLabel = daysAgo === null ? '' : daysAgo < 1 ? 'today' : daysAgo < 30 ? `${daysAgo}d ago` : daysAgo < 365 ? `${Math.floor(daysAgo / 30)}mo ago` : `${Math.floor(daysAgo / 365)}y ago`;
+                const dl = r.downloads;
+                const dlLabel = !dl ? '' : dl > 1e6 ? `${(dl / 1e6).toFixed(1)}M` : dl > 1e3 ? `${(dl / 1e3).toFixed(0)}k` : `${dl}`;
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => selectModel(r)}
+                    className="block w-full text-left text-xs text-neutral-300 hover:bg-neutral-800 px-2 py-1.5"
+                  >
+                    <div className="truncate">{r.id}</div>
+                    <div className="text-neutral-500 flex gap-3 mt-0.5">
+                      {dateLabel && <span>📅 {dateLabel}</span>}
+                      {dlLabel && <span>↓ {dlLabel}</span>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {searchResults.length === 0 && searchQuery && !searching && (
+            <div className="text-xs text-neutral-500 italic mb-3 px-1">
+              No results. Try a different query or <a href={`https://huggingface.co/models?search=${encodeURIComponent(searchQuery)}`} target="_blank" rel="noopener noreferrer" className="text-amber-500 underline">browse HuggingFace directly</a>.
             </div>
           )}
 
