@@ -467,7 +467,7 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
   );
 }
 
-function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRate, promptTokens, outputTokens, modelParams, modelQuant, modelActiveParams, appleCluster, compareMode, isSelected, onToggleSelect }) {
+function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRate, promptTokens, outputTokens, modelParams, modelQuant, modelActiveParams, appleCluster, compareMode, isSelected, canSelect, onToggleSelect }) {
   // How many units of this HW are needed to fit the model(s)?
   // NVIDIA standalone cards: stack via tensor parallelism
   // Apple machines: stack via EXO / llama.cpp RPC (only if appleCluster=true; performance penalty is severe)
@@ -526,7 +526,7 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
       <div className="lg:hidden border-b border-neutral-800 px-4 py-3">
         <div className="flex items-start justify-between mb-1.5">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            {compareMode && <input type="checkbox" checked={isSelected} onChange={onToggleSelect} className="flex-shrink-0 w-4 h-4 cursor-pointer accent-amber-500 mt-0.5" />}
+            {compareMode && <input type="checkbox" checked={isSelected} onChange={onToggleSelect} disabled={!isSelected && !canSelect} className={`flex-shrink-0 w-4 h-4 accent-amber-500 mt-0.5 ${!isSelected && !canSelect ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`} />}
             {!reallyFits && <AlertTriangle size={12} className="text-red-400 flex-shrink-0" />}
             {needed > 1 && (
               <span className="inline-flex items-center justify-center bg-amber-500 text-neutral-950 font-mono text-xs px-1.5 py-0.5 font-bold flex-shrink-0">
@@ -595,7 +595,7 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
       {/* Desktop table row (≥ lg) */}
       <div className="hidden lg:grid grid-cols-12 gap-2 px-3 py-2.5 border-b border-neutral-800 text-sm items-center">
         <div className="col-span-2 flex items-center gap-2">
-          {compareMode && <input type="checkbox" checked={isSelected} onChange={onToggleSelect} className="flex-shrink-0 w-3.5 h-3.5 cursor-pointer accent-amber-500" />}
+          {compareMode && <input type="checkbox" checked={isSelected} onChange={onToggleSelect} disabled={!isSelected && !canSelect} className={`flex-shrink-0 w-3.5 h-3.5 accent-amber-500 ${!isSelected && !canSelect ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`} />}
           {!reallyFits && <AlertTriangle size={12} className="text-red-400" />}
           <div className="min-w-0">
             <div className="font-serif text-neutral-100 flex items-center gap-2">
@@ -658,6 +658,104 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
         </div>
       </div>
 
+    </div>
+  );
+}
+
+function ComparePanel({ items, totalVRAM, runtimeMonths, electricityRate, promptTokens, outputTokens, primaryModel, appleCluster, onClose }) {
+  const stats = items.map(hw => {
+    const canStack = (hw.vendor === 'NVIDIA' && hw.category !== 'dgx') || (hw.vendor === 'Apple' && appleCluster);
+    const needed = canStack && totalVRAM > 0 ? Math.ceil(totalVRAM / hw.vram) : 1;
+    const vramOverhead = hw.vendor === 'Apple' ? 0.15 : 0.1;
+    const effectiveVRAM = hw.vram * needed * (needed === 1 ? 1 : 1 - vramOverhead * (needed - 1) / needed);
+    const reallyFits = canStack ? true : effectiveVRAM >= totalVRAM;
+    const totalPrice = hw.price * needed;
+    const totalPower = hw.power * needed;
+    const costPerGB = totalPrice / (hw.vram * needed);
+    const yearlyKwh = (totalPower / 1000) * 24 * 30 * runtimeMonths * 0.5;
+    const electricityCost = yearlyKwh * electricityRate;
+    const totalCost = totalPrice + electricityCost;
+    const latency = primaryModel
+      ? calcLatency(primaryModel.params, primaryModel.quant, promptTokens, outputTokens, hw, Math.max(needed, hw.units || 1), primaryModel.activeParams)
+      : null;
+    return { hw, needed, reallyFits, totalPrice, totalPower, costPerGB, electricityCost, totalCost, latency };
+  });
+
+  const rows = [
+    { label: 'VRAM',         get: s => s.hw.vram * s.needed,          fmt: v => `${v} GB`,                     best: 'max' },
+    { label: 'Fits model',   get: s => s.reallyFits ? 1 : 0,          fmt: (v,s) => s.reallyFits ? '✓ fits' : '✗ too small', best: 'max', isFit: true },
+    { label: 'Price',        get: s => s.totalPrice,                   fmt: v => fmtMoney(v),                   best: 'min' },
+    { label: '$ / GB',       get: s => s.costPerGB,                    fmt: v => `$${v.toFixed(0)}`,            best: 'min' },
+    { label: 'Mem bandwidth',get: s => s.hw.bandwidth_gbs,             fmt: v => `${fmt(v,0)} GB/s`,            best: 'max' },
+    { label: 'Prefill (TTFT)',get: s => s.latency ? s.latency.prefillMs : null, fmt: v => v != null ? fmtMs(v) : '–', best: 'min' },
+    { label: 'Decode',       get: s => s.latency ? s.latency.tokensPerSec : null, fmt: v => v != null ? `~${fmt(v,0)} tok/s` : '–', best: 'max' },
+    { label: 'Power',        get: s => s.totalPower,                   fmt: v => `${v} W`,                      best: 'min' },
+    { label: 'TCO',          get: s => s.totalCost,                    fmt: v => fmtMoney(v),                   best: 'min' },
+  ];
+
+  return (
+    <div className="mb-6 border border-amber-500/25 bg-neutral-950">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-amber-500/20 bg-neutral-900/60">
+        <span className="text-xs font-mono uppercase tracking-widest text-amber-500">
+          ▮ comparing {items.length} item{items.length > 1 ? 's' : ''}
+        </span>
+        <button onClick={onClose} className="flex items-center gap-1.5 text-xs font-mono text-neutral-500 hover:text-neutral-200 transition-colors">
+          <X size={12} /> exit
+        </button>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs font-mono border-collapse" style={{ minWidth: `${180 + items.length * 160}px` }}>
+          <thead>
+            <tr className="border-b border-neutral-800">
+              <th className="text-left px-4 py-3 text-neutral-600 font-normal w-36 text-[10px] uppercase tracking-wider">metric</th>
+              {stats.map(s => (
+                <th key={s.hw.id} className="px-4 py-3 text-left border-l border-neutral-800">
+                  <div className="text-neutral-100 font-medium">{s.hw.name}</div>
+                  <div className="text-neutral-500 font-normal text-[10px] uppercase mt-0.5">{s.hw.vendor} · {s.hw.category}</div>
+                  {s.needed > 1 && <div className="text-amber-500/70 text-[10px] mt-0.5">{s.needed}× stacked</div>}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(row => {
+              const vals = stats.map(s => row.get(s));
+              const numeric = vals.filter(v => v !== null && !isNaN(v));
+              const allSame = numeric.length > 1 && numeric.every(v => v === numeric[0]);
+              const bestVal = numeric.length > 0
+                ? (row.best === 'max' ? Math.max(...numeric) : Math.min(...numeric))
+                : null;
+              return (
+                <tr key={row.label} className="border-b border-neutral-800/50 hover:bg-neutral-900/40 transition-colors">
+                  <td className="px-4 py-2.5 text-neutral-500 text-[10px] uppercase tracking-wider">{row.label}</td>
+                  {stats.map((s, i) => {
+                    const v = vals[i];
+                    const isBest = !allSame && bestVal !== null && v !== null && v === bestVal;
+                    return (
+                      <td key={s.hw.id} className={`px-4 py-2.5 border-l border-neutral-800 ${
+                        row.isFit
+                          ? s.reallyFits ? 'text-emerald-400' : 'text-red-400'
+                          : isBest ? 'text-amber-400' : 'text-neutral-300'
+                      }`}>
+                        {row.fmt(v, s)}
+                        {isBest && !row.isFit && <span className="text-amber-500/50 ml-1 text-[9px]">★</span>}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Footer hint */}
+      <div className="px-4 py-2 border-t border-neutral-800 text-[10px] text-neutral-600">
+        ★ best value in each row · select up to 4 items
+      </div>
     </div>
   );
 }
@@ -778,6 +876,12 @@ export default function App() {
     });
     return hw;
   }, [vendorFilter, categoryFilter, sortBy, totalVRAM, runtimeMonths, electricityRate, promptTokens, outputTokens, primaryModel, appleCluster, hwSearch, maxPrice, maxPriceEnabled]);
+
+  // Items selected for side-by-side compare panel
+  const compareItems = useMemo(() => {
+    if (!compareMode || compareSelected.size < 2) return [];
+    return HARDWARE.filter(h => compareSelected.has(h.id));
+  }, [compareMode, compareSelected]);
 
   // Find best (cheapest) fit considering multi-GPU configs
   const bestPick = useMemo(() => {
@@ -1039,7 +1143,11 @@ export default function App() {
               onClick={() => { setCompareMode(m => !m); setCompareSelected(new Set()); }}
               className={`text-xs font-mono uppercase px-3 py-1 border transition-colors ${compareMode ? 'bg-amber-500 text-neutral-950 border-amber-500' : 'border-neutral-700 text-neutral-400 hover:border-amber-500 hover:text-amber-500'}`}
             >
-              {compareMode ? `comparing ${compareSelected.size} selected` : 'compare'}
+              {compareMode
+                ? compareSelected.size === 0 ? '× exit compare'
+                : compareSelected.size === 1 ? '1 selected — pick 1 more'
+                : `comparing ${compareSelected.size}`
+                : 'compare'}
             </button>
           </div>
         </div>
@@ -1144,6 +1252,30 @@ export default function App() {
           </div>
         )}
 
+        {/* Compare panel — appears when ≥2 items checked */}
+        {compareMode && compareItems.length >= 2 && (
+          <ComparePanel
+            items={compareItems}
+            totalVRAM={totalVRAM}
+            runtimeMonths={runtimeMonths}
+            electricityRate={electricityRate}
+            promptTokens={promptTokens}
+            outputTokens={outputTokens}
+            primaryModel={primaryModel}
+            appleCluster={appleCluster}
+            onClose={() => { setCompareMode(false); setCompareSelected(new Set()); }}
+          />
+        )}
+
+        {/* Compare mode hint */}
+        {compareMode && compareItems.length < 2 && (
+          <div className="mb-4 px-4 py-3 border border-dashed border-neutral-700 text-xs text-neutral-500 font-mono">
+            {compareSelected.size === 0
+              ? '← check items to compare — select 2 to 4'
+              : '← select 1 more to show the comparison panel'}
+          </div>
+        )}
+
         {/* Table */}
         <div className="border border-neutral-800 bg-neutral-900/30">
           <div className="hidden lg:grid grid-cols-12 gap-2 px-3 py-2 text-xs font-mono uppercase text-neutral-500 border-b border-neutral-800 bg-neutral-900/60">
@@ -1159,27 +1291,32 @@ export default function App() {
           </div>
 
           {filteredHW.map(hw => (
-            <div key={hw.id} className={compareMode && compareSelected.size > 0 && !compareSelected.has(hw.id) ? 'opacity-25' : ''}>
-            <HardwareRow
-              hw={hw}
-              totalVRAM={totalVRAM}
-              modelsCount={models.filter(m => m.params).length}
-              runtimeMonths={runtimeMonths}
-              electricityRate={electricityRate}
-              promptTokens={promptTokens}
-              outputTokens={outputTokens}
-              modelParams={primaryModel ? primaryModel.params : 0}
-              modelQuant={primaryModel ? primaryModel.quant : 'fp16'}
-              modelActiveParams={primaryModel ? primaryModel.activeParams : null}
-              appleCluster={appleCluster}
-              compareMode={compareMode}
-              isSelected={compareSelected.has(hw.id)}
-              onToggleSelect={() => setCompareSelected(prev => {
-                const next = new Set(prev);
-                next.has(hw.id) ? next.delete(hw.id) : next.add(hw.id);
-                return next;
-              })}
-            />
+            <div key={hw.id} className={compareMode && compareSelected.has(hw.id) ? 'border-l-2 border-amber-500' : 'border-l-2 border-transparent'}>
+              <HardwareRow
+                hw={hw}
+                totalVRAM={totalVRAM}
+                modelsCount={models.filter(m => m.params).length}
+                runtimeMonths={runtimeMonths}
+                electricityRate={electricityRate}
+                promptTokens={promptTokens}
+                outputTokens={outputTokens}
+                modelParams={primaryModel ? primaryModel.params : 0}
+                modelQuant={primaryModel ? primaryModel.quant : 'fp16'}
+                modelActiveParams={primaryModel ? primaryModel.activeParams : null}
+                appleCluster={appleCluster}
+                compareMode={compareMode}
+                isSelected={compareSelected.has(hw.id)}
+                canSelect={compareSelected.size < 4}
+                onToggleSelect={() => setCompareSelected(prev => {
+                  const next = new Set(prev);
+                  if (next.has(hw.id)) {
+                    next.delete(hw.id);
+                  } else if (next.size < 4) {
+                    next.add(hw.id);
+                  }
+                  return next;
+                })}
+              />
             </div>
           ))}
         </div>
