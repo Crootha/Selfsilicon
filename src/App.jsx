@@ -507,68 +507,142 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
   const isAppleCluster = hw.vendor === 'Apple' && needed > 1;
 
   return (
-    <div className={`grid grid-cols-12 gap-2 px-3 py-2.5 border-b border-neutral-800 text-sm items-center ${reallyFits ? '' : 'opacity-40'}`}>
-      <div className="col-span-2 flex items-center gap-2">
-        {!reallyFits && <AlertTriangle size={12} className="text-red-400" />}
-        <div className="min-w-0">
-          <div className="font-serif text-neutral-100 flex items-center gap-2">
+    <div className={reallyFits ? '' : 'opacity-40'}>
+
+      {/* Mobile / tablet card (< lg) */}
+      <div className="lg:hidden border-b border-neutral-800 px-4 py-3">
+        <div className="flex items-start justify-between mb-1.5">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            {!reallyFits && <AlertTriangle size={12} className="text-red-400 flex-shrink-0" />}
             {needed > 1 && (
-              <span className="inline-flex items-center justify-center bg-amber-500 text-neutral-950 font-mono text-xs px-1.5 py-0.5 font-bold">
+              <span className="inline-flex items-center justify-center bg-amber-500 text-neutral-950 font-mono text-xs px-1.5 py-0.5 font-bold flex-shrink-0">
                 {needed}×
               </span>
             )}
-            <span className="truncate">{hw.name}</span>
+            <span className="font-serif text-neutral-100 truncate">{hw.name}</span>
           </div>
-          <div className="text-xs text-neutral-500 font-mono uppercase tracking-wider">
-            {hw.vendor} · {hw.category}
-            {needed > 1 && !isAppleCluster && <span className="text-amber-500/70 ml-1">· multi-GPU</span>}
-            {isAppleCluster && <span className="text-orange-400/80 ml-1" title="EXO/llama.cpp RPC over Thunderbolt — significant performance penalty">· cluster ⚠</span>}
+          <span className="font-mono text-amber-500 ml-3 flex-shrink-0">{fmtMoney(totalPrice)}</span>
+        </div>
+        <div className="text-xs text-neutral-500 font-mono uppercase tracking-wider mb-2">
+          {hw.vendor} · {hw.category}
+          {needed > 1 && !isAppleCluster && <span className="text-amber-500/70 ml-1">· multi-GPU</span>}
+          {isAppleCluster && <span className="text-orange-400/80 ml-1" title="EXO/llama.cpp RPC — performance penalty">· cluster ⚠</span>}
+        </div>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mb-2.5">
+          <div className="flex justify-between gap-2">
+            <span className="text-neutral-500">VRAM</span>
+            <span className="font-mono">
+              {hw.vram * needed}GB
+              {reallyFits && <span className="text-emerald-500 ml-1">+{headroom.toFixed(0)}%</span>}
+            </span>
+          </div>
+          <div className="flex justify-between gap-2">
+            <span className="text-neutral-500">$/GB</span>
+            <span className="font-mono">${costPerGB.toFixed(0)}</span>
+          </div>
+          <div className="flex justify-between gap-2">
+            <span className="text-neutral-500">Bandwidth</span>
+            <span className="font-mono">{fmt(hw.bandwidth_gbs, 0)} GB/s</span>
+          </div>
+          <div className="flex justify-between gap-2">
+            <span className="text-neutral-500">Power</span>
+            <span className="font-mono">{totalPower}W</span>
+          </div>
+          <div className="flex justify-between gap-2">
+            <span className="text-neutral-500">Prefill</span>
+            <span className="font-mono text-amber-500">{latency ? fmtMs(latency.prefillMs) : '–'}</span>
+          </div>
+          <div className="flex justify-between gap-2">
+            <span className="text-neutral-500">Decode</span>
+            <span className="font-mono text-emerald-400">{latency ? `~${fmt(latency.tokensPerSec, 0)} tok/s` : '–'}</span>
+          </div>
+          <div className="flex justify-between gap-2">
+            <span className="text-neutral-500">Energy</span>
+            <span className="font-mono text-neutral-400">+{fmtMoney(electricityCost)}</span>
+          </div>
+          <div className="flex justify-between gap-2">
+            <span className="text-neutral-500">TCO</span>
+            <span className="font-mono text-amber-500">{fmtMoney(totalCost)}</span>
           </div>
         </div>
-      </div>
-      <div className="col-span-1 text-right font-mono">
-        <div className="text-neutral-100">
-          {hw.vram * needed}<span className="text-neutral-500 text-xs ml-0.5">GB</span>
-        </div>
-        {needed > 1 && <div className="text-xs text-neutral-500">{needed}×{hw.vram}GB</div>}
-        {reallyFits && <div className="text-xs text-emerald-500">+{headroom.toFixed(0)}%</div>}
-      </div>
-      <div className="col-span-2 text-right">
-        <div className="font-mono text-neutral-100">{fmtMoney(totalPrice)}</div>
-        {needed > 1 && <div className="text-xs text-neutral-500">{fmtMoney(hw.price)} ea.</div>}
-        <div className="flex gap-1.5 justify-end mt-1 text-xs font-mono">
+        <div className="flex gap-3 text-xs font-mono">
           {links.apple ? (
-            <a href={links.apple} target="_blank" rel="noopener noreferrer" className="text-neutral-500 hover:text-amber-500 underline decoration-dotted" title="Check price on apple.com">apple</a>
+            <a href={links.apple} target="_blank" rel="noopener noreferrer" className="text-neutral-500 hover:text-amber-500 underline decoration-dotted">apple.com</a>
           ) : (
             <>
-              <a href={links.amazon} target="_blank" rel="noopener noreferrer" className="text-neutral-500 hover:text-amber-500 underline decoration-dotted" title="Search on Amazon">amzn</a>
-              <a href={links.newegg} target="_blank" rel="noopener noreferrer" className="text-neutral-500 hover:text-amber-500 underline decoration-dotted" title="Search on Newegg">newegg</a>
-              <a href={links.ebay} target="_blank" rel="noopener noreferrer" className="text-neutral-500 hover:text-amber-500 underline decoration-dotted" title="Search on eBay">ebay</a>
+              <a href={links.amazon} target="_blank" rel="noopener noreferrer" className="text-neutral-500 hover:text-amber-500 underline decoration-dotted">amzn</a>
+              <a href={links.newegg} target="_blank" rel="noopener noreferrer" className="text-neutral-500 hover:text-amber-500 underline decoration-dotted">newegg</a>
+              <a href={links.ebay} target="_blank" rel="noopener noreferrer" className="text-neutral-500 hover:text-amber-500 underline decoration-dotted">ebay</a>
             </>
           )}
         </div>
       </div>
-      <div className="col-span-1 text-right font-mono text-neutral-300 text-xs">${costPerGB.toFixed(0)}/GB</div>
-      <div className="col-span-1 text-right font-mono text-neutral-300 text-xs">
-        <div className="text-neutral-100">{fmt(hw.bandwidth_gbs, 0)}</div>
-        <div className="text-neutral-600">GB/s</div>
+
+      {/* Desktop table row (≥ lg) */}
+      <div className="hidden lg:grid grid-cols-12 gap-2 px-3 py-2.5 border-b border-neutral-800 text-sm items-center">
+        <div className="col-span-2 flex items-center gap-2">
+          {!reallyFits && <AlertTriangle size={12} className="text-red-400" />}
+          <div className="min-w-0">
+            <div className="font-serif text-neutral-100 flex items-center gap-2">
+              {needed > 1 && (
+                <span className="inline-flex items-center justify-center bg-amber-500 text-neutral-950 font-mono text-xs px-1.5 py-0.5 font-bold">
+                  {needed}×
+                </span>
+              )}
+              <span className="truncate">{hw.name}</span>
+            </div>
+            <div className="text-xs text-neutral-500 font-mono uppercase tracking-wider">
+              {hw.vendor} · {hw.category}
+              {needed > 1 && !isAppleCluster && <span className="text-amber-500/70 ml-1">· multi-GPU</span>}
+              {isAppleCluster && <span className="text-orange-400/80 ml-1" title="EXO/llama.cpp RPC over Thunderbolt — significant performance penalty">· cluster ⚠</span>}
+            </div>
+          </div>
+        </div>
+        <div className="col-span-1 text-right font-mono">
+          <div className="text-neutral-100">
+            {hw.vram * needed}<span className="text-neutral-500 text-xs ml-0.5">GB</span>
+          </div>
+          {needed > 1 && <div className="text-xs text-neutral-500">{needed}×{hw.vram}GB</div>}
+          {reallyFits && <div className="text-xs text-emerald-500">+{headroom.toFixed(0)}%</div>}
+        </div>
+        <div className="col-span-2 text-right">
+          <div className="font-mono text-neutral-100">{fmtMoney(totalPrice)}</div>
+          {needed > 1 && <div className="text-xs text-neutral-500">{fmtMoney(hw.price)} ea.</div>}
+          <div className="flex gap-1.5 justify-end mt-1 text-xs font-mono">
+            {links.apple ? (
+              <a href={links.apple} target="_blank" rel="noopener noreferrer" className="text-neutral-500 hover:text-amber-500 underline decoration-dotted" title="Check price on apple.com">apple</a>
+            ) : (
+              <>
+                <a href={links.amazon} target="_blank" rel="noopener noreferrer" className="text-neutral-500 hover:text-amber-500 underline decoration-dotted" title="Search on Amazon">amzn</a>
+                <a href={links.newegg} target="_blank" rel="noopener noreferrer" className="text-neutral-500 hover:text-amber-500 underline decoration-dotted" title="Search on Newegg">newegg</a>
+                <a href={links.ebay} target="_blank" rel="noopener noreferrer" className="text-neutral-500 hover:text-amber-500 underline decoration-dotted" title="Search on eBay">ebay</a>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="col-span-1 text-right font-mono text-neutral-300 text-xs">${costPerGB.toFixed(0)}/GB</div>
+        <div className="col-span-1 text-right font-mono text-neutral-300 text-xs">
+          <div className="text-neutral-100">{fmt(hw.bandwidth_gbs, 0)}</div>
+          <div className="text-neutral-600">GB/s</div>
+        </div>
+        <div className="col-span-1 text-right">
+          <div className="font-mono text-amber-500">{latency ? fmtMs(latency.prefillMs) : '–'}</div>
+          <div className="text-xs text-neutral-600">prefill (TTFT)</div>
+        </div>
+        <div className="col-span-1 text-right">
+          <div className="font-mono text-emerald-400">{latency ? `~${fmt(latency.tokensPerSec, 0)}` : '–'}</div>
+          <div className="text-xs text-neutral-600">tok/s decode</div>
+        </div>
+        <div className="col-span-1 text-right font-mono text-neutral-300">
+          {totalPower}W
+          {needed > 1 && <div className="text-xs text-neutral-500">{hw.power}W ea.</div>}
+        </div>
+        <div className="col-span-2 text-right">
+          <div className="font-mono text-amber-500">{fmtMoney(totalCost)}</div>
+          <div className="text-xs text-neutral-500">+{fmtMoney(electricityCost)} energy</div>
+        </div>
       </div>
-      <div className="col-span-1 text-right">
-        <div className="font-mono text-amber-500">{latency ? fmtMs(latency.prefillMs) : '–'}</div>
-        <div className="text-xs text-neutral-600">prefill (TTFT)</div>
-      </div>
-      <div className="col-span-1 text-right">
-        <div className="font-mono text-emerald-400">{latency ? `~${fmt(latency.tokensPerSec, 0)}` : '–'}</div>
-        <div className="text-xs text-neutral-600">tok/s decode</div>
-      </div>
-      <div className="col-span-1 text-right font-mono text-neutral-300">
-        {totalPower}W
-        {needed > 1 && <div className="text-xs text-neutral-500">{hw.power}W ea.</div>}
-      </div>
-      <div className="col-span-2 text-right">
-        <div className="font-mono text-amber-500">{fmtMoney(totalCost)}</div>
-        <div className="text-xs text-neutral-500">+{fmtMoney(electricityCost)} energy</div>
-      </div>
+
     </div>
   );
 }
@@ -919,7 +993,7 @@ export default function App() {
 
       {/* COMPARISON TABLE */}
       <div className="max-w-7xl mx-auto px-6 pb-12">
-        <div className="flex items-end justify-between mb-4">
+        <div className="flex flex-wrap items-start justify-between gap-2 mb-4">
           <h2 className="font-serif text-2xl">
             <span className="text-amber-500">02.</span> Hardware comparison
           </h2>
@@ -929,9 +1003,31 @@ export default function App() {
           </div>
         </div>
 
+        {/* Mobile sort */}
+        <div className="flex items-center gap-2 lg:hidden mb-3">
+          <span className="text-xs text-neutral-500 font-mono uppercase tracking-wider flex-shrink-0">sort:</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="flex-1 bg-neutral-950 border border-neutral-700 px-2 py-1 text-xs text-neutral-200"
+          >
+            {[
+              { id: 'price', label: 'Price (cheapest first)' },
+              { id: 'vram', label: 'VRAM (most first)' },
+              { id: 'costPerGB', label: 'Cost / GB' },
+              { id: 'bandwidth', label: 'Memory bandwidth' },
+              { id: 'prefill', label: 'Prefill speed (TTFT)' },
+              { id: 'decode', label: 'Decode speed (tok/s)' },
+              { id: 'power', label: 'Power (lowest first)' },
+              { id: 'total', label: 'Total cost (TCO)' },
+            ].map(opt => (
+              <option key={opt.id} value={opt.id}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
         {/* Filters */}
         <div className="flex flex-wrap gap-2 mb-4">
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-1">
             <span className="text-xs text-neutral-500 font-mono uppercase mr-2 self-center">vendor:</span>
             {['all', 'NVIDIA', 'Apple'].map(v => (
               <button
@@ -943,7 +1039,7 @@ export default function App() {
               </button>
             ))}
           </div>
-          <div className="flex gap-1 ml-2">
+          <div className="flex flex-wrap gap-1 ml-2">
             <span className="text-xs text-neutral-500 font-mono uppercase mr-2 self-center">category:</span>
             {['all', 'consumer', 'workstation', 'datacenter', 'dgx', 'apple'].map(c => (
               <button
@@ -975,7 +1071,7 @@ export default function App() {
 
         {/* Table */}
         <div className="border border-neutral-800 bg-neutral-900/30">
-          <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-mono uppercase text-neutral-500 border-b border-neutral-800 bg-neutral-900/60">
+          <div className="hidden lg:grid grid-cols-12 gap-2 px-3 py-2 text-xs font-mono uppercase text-neutral-500 border-b border-neutral-800 bg-neutral-900/60">
             <button onClick={() => setSortBy('name')} className="col-span-2 text-left">Hardware</button>
             <button onClick={() => setSortBy('vram')} className="col-span-1 text-right hover:text-amber-500">VRAM {sortBy === 'vram' && '↓'}</button>
             <button onClick={() => setSortBy('price')} className="col-span-2 text-right hover:text-amber-500">Price {sortBy === 'price' && '↓'}</button>

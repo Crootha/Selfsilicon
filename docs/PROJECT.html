@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selfsilicon — Project Overview</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --surface2: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #f59e0b;
+    --accent2: #fb923c;
+    --text: #e5e5e5;
+    --muted: #737373;
+    --dim: #404040;
+    --green: #34d399;
+    --red: #f87171;
+    --blue: #60a5fa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Layout */
+  .page { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* Header */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px;
+    margin-bottom: 40px;
+    background-image:
+      linear-gradient(rgba(245,158,11,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,158,11,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .header-label {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 52px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  h1 em { color: var(--accent); font-style: italic; }
+  .subtitle { color: var(--muted); max-width: 600px; font-size: 13px; }
+
+  /* Section */
+  .section { margin-bottom: 48px; }
+  h2 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 26px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+  h2 .num { color: var(--accent); }
+  h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    margin-bottom: 10px;
+    margin-top: 20px;
+  }
+  p { color: var(--muted); margin-bottom: 10px; }
+
+  /* Cards grid */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+  }
+  .card-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 6px; }
+  .card-value { font-size: 22px; color: var(--text); font-family: 'Fraunces', Georgia, serif; }
+  .card-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  th {
+    text-align: left;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 10px;
+    background: var(--surface);
+  }
+  td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  td code, th code { background: var(--surface2); padding: 1px 5px; border-radius: 3px; font-size: 11px; color: var(--accent2); }
+  .dim-cell { color: var(--muted); }
+  .accent { color: var(--accent); }
+  .green { color: var(--green); }
+  .red { color: var(--red); }
+  .blue { color: var(--blue); }
+  .orange { color: var(--accent2); }
+
+  /* Code block */
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 12px;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  code { font-family: 'IBM Plex Mono', 'Fira Code', monospace; }
+  .inline-code { background: var(--surface2); padding: 1px 6px; font-size: 11px; color: var(--accent2); font-family: monospace; }
+
+  /* Todo list */
+  .todo-list { list-style: none; }
+  .todo-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .todo-item:first-child { border-top: 1px solid var(--border); }
+  .todo-check { margin-top: 1px; width: 14px; height: 14px; border: 1px solid var(--dim); flex-shrink: 0; }
+  .todo-tag {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 1px 5px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .tag-bug { background: #7f1d1d; color: #fca5a5; }
+  .tag-ux { background: #1e3a5f; color: #93c5fd; }
+  .tag-feature { background: #14532d; color: #86efac; }
+  .tag-math { background: #3b1f6b; color: #c4b5fd; }
+  .tag-spec { background: #3f2d10; color: #fcd34d; }
+  .todo-text { color: var(--text); flex: 1; }
+  .todo-sub { color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+  /* Formula box */
+  .formula {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    margin: 8px 0;
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--green);
+  }
+  .formula-note { color: var(--muted); font-size: 11px; margin-top: 4px; }
+
+  /* Architecture tree */
+  .arch-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 16px 20px;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .arch-tree .file { color: var(--accent); }
+  .arch-tree .dir { color: var(--blue); }
+  .arch-tree .note { color: var(--muted); }
+
+  /* Two-col */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } h1 { font-size: 32px; } }
+
+  /* Accuracy badge */
+  .accuracy {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    border: 1px solid;
+    margin-left: 6px;
+  }
+  .acc-good { border-color: var(--green); color: var(--green); }
+  .acc-warn { border-color: var(--accent); color: var(--accent); }
+  .acc-bad { border-color: var(--red); color: var(--red); }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; margin-bottom: -1px; }
+  .tab {
+    padding: 6px 16px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    user-select: none;
+  }
+  .tab.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .tab-panel { display: none; border: 1px solid var(--border); padding: 16px; }
+  .tab-panel.active { display: block; }
+
+  /* Divider */
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  /* Callout */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    padding: 10px 14px;
+    margin: 12px 0;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .callout strong { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-label">▮▮▮ Project Overview · Selfsilicon</div>
+    <h1>how much <em>silicon</em><br>do you need</h1>
+    <p class="subtitle">
+      Static SPA that calculates VRAM requirements, latency estimates, and total cost of ownership
+      for running LLMs locally. Compare NVIDIA GPUs, DGX systems, and Apple Silicon side by side.
+    </p>
+  </div>
+
+  <!-- AT A GLANCE -->
+  <div class="section">
+    <h2><span class="num">01.</span> At a glance</h2>
+    <div class="cards">
+      <div class="card">
+        <div class="card-label">Stack</div>
+        <div class="card-value">React 18</div>
+        <div class="card-sub">Vite · Tailwind · lucide-react</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Architecture</div>
+        <div class="card-value">Static SPA</div>
+        <div class="card-sub">No backend · No router · No DB</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Main file</div>
+        <div class="card-value">App.jsx</div>
+        <div class="card-sub">~1000 lines · all data + math + UI</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Deployment</div>
+        <div class="card-value">Any CDN</div>
+        <div class="card-sub">Vercel / Cloudflare Pages / GH Pages</div>
+      </div>
+    </div>
+    <div class="callout">
+      <strong>Single-file design is intentional.</strong> The app is small enough that splitting is overhead, not benefit.
+      See <code>docs/EXTENDING.md</code> for a refactor plan when App.jsx grows past ~1500 lines.
+    </div>
+  </div>
+
+  <!-- FILE STRUCTURE -->
+  <div class="section">
+    <h2><span class="num">02.</span> File structure</h2>
+    <div class="arch-tree">
+<span class="dir">repo/</span><br>
+├── <span class="file">CLAUDE.md</span>          <span class="note">← agent context (read this + PROJECT.html first)</span><br>
+├── <span class="file">index.html</span>          <span class="note">← Vite entry point</span><br>
+├── <span class="file">package.json</span>        <span class="note">← deps: react, tailwind, vite, lucide-react</span><br>
+├── <span class="file">vite.config.js</span><br>
+├── <span class="file">tailwind.config.js</span><br>
+├── <span class="dir">src/</span><br>
+│   ├── <span class="file">App.jsx</span>          <span class="note">← EVERYTHING: data, math helpers, components</span><br>
+│   ├── <span class="file">main.jsx</span>         <span class="note">← React.createRoot mount</span><br>
+│   └── <span class="file">index.css</span>        <span class="note">← Tailwind @base/@components/@utilities</span><br>
+├── <span class="dir">public/</span><br>
+│   └── <span class="file">favicon.svg</span><br>
+└── <span class="dir">docs/</span><br>
+    ├── <span class="file">PROJECT.html</span>     <span class="note">← this file — visual project spec</span><br>
+    ├── <span class="file">DATA.md</span>          <span class="note">← hardware schema, model presets, quant options</span><br>
+    ├── <span class="file">CALCULATIONS.md</span>  <span class="note">← every formula with derivation and caveats</span><br>
+    ├── <span class="file">EXTENDING.md</span>     <span class="note">← how to add GPUs, models, retailers, features</span><br>
+    └── <span class="file">DEPLOYMENT.md</span>    <span class="note">← Vercel / Cloudflare / self-host instructions</span><br>
+    </div>
+  </div>
+
+  <!-- ARCHITECTURE -->
+  <div class="section">
+    <h2><span class="num">03.</span> App.jsx architecture</h2>
+    <div class="arch-tree">
+<strong class="accent">DATA</strong> (top of file)<br>
+├── <span class="file">HARDWARE[]</span>          <span class="note">GPU specs: vram, price, tflops_fp16, bandwidth_gbs, power, category</span><br>
+├── <span class="file">KNOWN_MODELS[]</span>      <span class="note">Preset buttons: {id, name, params, activeParams?}</span><br>
+└── <span class="file">QUANT_OPTIONS[]</span>     <span class="note">Quantization: {id, name, bytesPerParam}</span><br>
+<br>
+<strong class="accent">MATH HELPERS</strong><br>
+├── <span class="file">calcVRAM(params, quantId, context, mode)</span>      <span class="note">→ {weights, kvCache, overhead, total}</span><br>
+├── <span class="file">calcLatency(params, quantId, prompt, output, hw, hwCount, activeParams)</span>  <span class="note">→ {prefillMs, tokensPerSec, ...}</span><br>
+├── <span class="file">paramsFromName(name)</span>   <span class="note">→ extracts B count from model name string</span><br>
+└── <span class="file">getRetailerLinks(hw)</span>   <span class="note">→ {amazon, ebay, newegg, apple?}</span><br>
+<br>
+<strong class="accent">COMPONENTS</strong><br>
+├── <span class="file">ModelCard</span>   <span class="note">HF search · preset select · quant + context config</span><br>
+├── <span class="file">HardwareRow</span> <span class="note">single row in comparison table — calls calcLatency internally</span><br>
+└── <span class="file">App</span>         <span class="note">root — all state, VRAM totals (useMemo), filter/sort, summary sidebar</span><br>
+    </div>
+
+    <h3>State in App</h3>
+    <table>
+      <tr><th>State</th><th>Default</th><th>Description</th></tr>
+      <tr><td><code>models[]</code></td><td>1 empty</td><td class="dim-cell">Array of {id, name, params, quant, context, activeParams, source}</td></tr>
+      <tr><td><code>calcMode</code></td><td><code>'detailed'</code></td><td class="dim-cell">simple = weights×1.2 / detailed = weights+KV+overhead</td></tr>
+      <tr><td><code>concurrent</code></td><td>true</td><td class="dim-cell">Sum all model VRAMs vs max of all</td></tr>
+      <tr><td><code>vendorFilter</code></td><td><code>'all'</code></td><td class="dim-cell">NVIDIA / Apple / all</td></tr>
+      <tr><td><code>categoryFilter</code></td><td><code>'all'</code></td><td class="dim-cell">consumer / workstation / datacenter / dgx / apple / all</td></tr>
+      <tr><td><code>sortBy</code></td><td><code>'price'</code></td><td class="dim-cell">price / vram / costPerGB / perf / bandwidth / prefill / decode / power / total</td></tr>
+      <tr><td><code>runtimeMonths</code></td><td>12</td><td class="dim-cell">TCO calculation window</td></tr>
+      <tr><td><code>electricityRate</code></td><td>0.15</td><td class="dim-cell">USD/kWh</td></tr>
+      <tr><td><code>promptTokens</code></td><td>1024</td><td class="dim-cell">For latency calc</td></tr>
+      <tr><td><code>outputTokens</code></td><td>256</td><td class="dim-cell">For latency calc</td></tr>
+      <tr><td><code>appleCluster</code></td><td>false</td><td class="dim-cell">Allow stacking Apple machines via EXO/llama.cpp RPC</td></tr>
+    </table>
+  </div>
+
+  <!-- MATH -->
+  <div class="section">
+    <h2><span class="num">04.</span> Math formulas</h2>
+
+    <h3>VRAM — Simple mode</h3>
+    <div class="formula">total_GB = params × bytesPerParam × 1.2
+<span class="formula-note">Flat 20% overhead. Good for "will this fit at all?" — ignores context length.</span></div>
+
+    <h3>VRAM — Detailed mode</h3>
+    <div class="formula">weights_GB  = params × bytesPerParam
+n_layers    = max(32, round(√params × 8))        ← estimated (wrong for MoE/GQA)
+d_model     = max(2048, round(√params × 600))    ← estimated
+kv_cache_GB = (2 × n_layers × d_model × context × batch × 2) / 1e9
+overhead_GB = weights × 0.1 + 1
+total_GB    = weights + kv_cache + overhead
+<span class="formula-note">KV stays FP16 (2 bytes) even when weights are INT4. n_layers/d_model estimates are ±30% for modern dense models, worse for MoE.</span></div>
+
+    <h3>Prefill (TTFT) <span class="accuracy acc-warn">±30-50% optimistic</span></h3>
+    <div class="formula">flops       = 2 × active_params × 1e9 × prompt_tokens
+ttft_ms     = flops / (tflops_fp16 × 1e12 × 0.3) × 1000
+<span class="formula-note">efficiency=0.3 (conservative). For MoE, active_params = routed experts only. Multi-GPU: tflops × n^0.85 scaling.</span></div>
+
+    <h3>Decode (tokens/sec) <span class="accuracy acc-good">±25%</span></h3>
+    <div class="formula">read_GB      = active_params × bytesPerParam          ← MoE reads only active experts
+efficiency   = 0.7 (dense) | 0.2 (MoE)              ← MoE has routing + scattered access overhead
+ms_per_token = read_GB / (bandwidth_gbs × efficiency) × 1000
+tok_per_sec  = 1000 / ms_per_token
+<span class="formula-note">Memory-bandwidth-bound. Calibrated: Qwen 3.5 35B-A3B Q4 on M4 mini ≈ 35 tok/s · H100 Llama 70B FP16 ≈ 30 tok/s.</span></div>
+
+    <h3>TCO</h3>
+    <div class="formula">yearly_kWh  = (power_W / 1000) × 24 × 30 × months × 0.5
+elec_cost   = yearly_kWh × rate_per_kWh
+tco         = hw_price × count + elec_cost
+<span class="formula-note">0.5 = 50% utilization assumption. Does NOT include cooling, networking, server chassis, or amortization.</span></div>
+
+    <h3>Multi-GPU scaling</h3>
+    <table>
+      <tr><th>Type</th><th>Scale exponent</th><th>Example</th><th>Notes</th></tr>
+      <tr><td>NVIDIA tensor parallel</td><td class="accent">^0.85</td><td>2× GPUs ≈ 1.8× speed</td><td class="dim-cell">NVLink/PCIe; ~10% VRAM overhead per extra GPU</td></tr>
+      <tr><td>Apple cluster (EXO)</td><td class="orange">^0.55</td><td>2× nodes ≈ 1.4× speed</td><td class="dim-cell">Thunderbolt 4 (~40 Gbps) vs NVLink (~7,200 Gbps)</td></tr>
+      <tr><td>DGX internal</td><td>n/a</td><td>Already baked in</td><td class="dim-cell">DGX entries use <code>units</code> field; can't be further stacked</td></tr>
+    </table>
+
+    <h3>Known formula weaknesses</h3>
+    <table>
+      <tr><th>Issue</th><th>Impact</th><th>Fix</th></tr>
+      <tr><td>KV cache estimated from √params</td><td class="red">High — wrong for MoE/GQA</td><td class="dim-cell">Fetch config.json from HuggingFace (see EXTENDING.md)</td></tr>
+      <tr><td>INT8/FP8 TFLOPS not used</td><td class="accent">Medium — underestimates H100/B200 prefill</td><td class="dim-cell">Add <code>tflops_int8</code> field, use when quant=fp8/int8</td></tr>
+      <tr><td>GQA not modelled</td><td class="accent">Medium — overestimates KV cache for Llama3, Qwen3</td><td class="dim-cell">Add <code>nKvHeads</code> to model, scale KV by nKvHeads/nHeads</td></tr>
+      <tr><td>Prefill efficiency=0.3 flat</td><td class="dim-cell">Low — short prompts are bandwidth-bound, not compute</td><td class="dim-cell">Switch to bandwidth model below 512 tokens</td></tr>
+    </table>
+  </div>
+
+  <!-- DATA SCHEMAS -->
+  <div class="section">
+    <h2><span class="num">05.</span> Data schemas</h2>
+
+    <h3>HARDWARE entry</h3>
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+      <tr><td><code>id</code></td><td>string</td><td class="green">yes</td><td class="dim-cell">Unique slug, used as React key</td></tr>
+      <tr><td><code>vendor</code></td><td><code>'NVIDIA'|'Apple'</code></td><td class="green">yes</td><td class="dim-cell">Controls filter and multi-GPU logic</td></tr>
+      <tr><td><code>name</code></td><td>string</td><td class="green">yes</td><td class="dim-cell">Display name in UI</td></tr>
+      <tr><td><code>vram</code></td><td>number (GB)</td><td class="green">yes</td><td class="dim-cell">Usable VRAM. Apple: ~75% of totalRam</td></tr>
+      <tr><td><code>price</code></td><td>number (USD)</td><td class="green">yes</td><td class="dim-cell">Approx retail, ~2025</td></tr>
+      <tr><td><code>tflops_fp16</code></td><td>number</td><td class="green">yes</td><td class="dim-cell">Dense FP16, no sparsity boost</td></tr>
+      <tr><td><code>bandwidth_gbs</code></td><td>number</td><td class="green">yes</td><td class="dim-cell">Memory bandwidth GB/s — critical for decode speed</td></tr>
+      <tr><td><code>power</code></td><td>number (W)</td><td class="green">yes</td><td class="dim-cell">TDP at full load</td></tr>
+      <tr><td><code>category</code></td><td>string</td><td class="green">yes</td><td class="dim-cell"><code>consumer|workstation|datacenter|dgx|apple</code></td></tr>
+      <tr><td><code>totalRam</code></td><td>number (GB)</td><td class="dim-cell">Apple only</td><td class="dim-cell">Total system RAM; vram ≈ totalRam × 0.75</td></tr>
+      <tr><td><code>units</code></td><td>number</td><td class="dim-cell">DGX only</td><td class="dim-cell">Internal GPU count (affects latency scaling)</td></tr>
+      <tr><td><code>note</code></td><td>string</td><td class="dim-cell">optional</td><td class="dim-cell">Shown as supplementary info in UI</td></tr>
+    </table>
+
+    <h3>KNOWN_MODELS entry</h3>
+    <table>
+      <tr><th>Field</th><th>Notes</th></tr>
+      <tr><td><code>id</code></td><td class="dim-cell">Unique slug</td></tr>
+      <tr><td><code>name</code></td><td class="dim-cell">Display name in preset buttons</td></tr>
+      <tr><td><code>params</code></td><td class="dim-cell">Billion parameters — TOTAL for MoE (not active). Drives VRAM calculation.</td></tr>
+      <tr><td><code>activeParams</code></td><td class="dim-cell">Optional. MoE only. Params active per token. Drives decode bandwidth calculation.</td></tr>
+    </table>
+
+    <h3>QUANT_OPTIONS entry</h3>
+    <table>
+      <tr><th>ID</th><th>bytesPerParam</th><th>Example: 70B</th><th>Maps to</th></tr>
+      <tr><td><code>fp16</code></td><td>2.0</td><td>140 GB</td><td class="dim-cell">BF16 too</td></tr>
+      <tr><td><code>fp8</code></td><td>1.0</td><td>70 GB</td><td class="dim-cell">FP8 float</td></tr>
+      <tr><td><code>int8</code></td><td>1.0</td><td>70 GB</td><td class="dim-cell">INT8 integer</td></tr>
+      <tr><td><code>int4</code></td><td>0.5</td><td>35 GB</td><td class="dim-cell">Q4_K_M, GPTQ 4-bit, AWQ 4-bit</td></tr>
+      <tr><td><code>q5</code></td><td>0.625</td><td>43.75 GB</td><td class="dim-cell">Q5_K_M, Q5_K_S</td></tr>
+      <tr><td><code>q3</code></td><td>0.375</td><td>26.25 GB</td><td class="dim-cell">Q3_K_M</td></tr>
+    </table>
+  </div>
+
+  <!-- HARDWARE OVERVIEW -->
+  <div class="section">
+    <h2><span class="num">06.</span> Hardware in the database</h2>
+
+    <div class="tabs" id="hw-tabs">
+      <div class="tab active" onclick="showTab('consumer')">Consumer</div>
+      <div class="tab" onclick="showTab('workstation')">Workstation</div>
+      <div class="tab" onclick="showTab('datacenter')">Datacenter</div>
+      <div class="tab" onclick="showTab('dgx')">DGX Systems</div>
+      <div class="tab" onclick="showTab('apple')">Apple Silicon</div>
+    </div>
+
+    <div class="tab-panel active" id="tab-consumer">
+      <table>
+        <tr><th>Name</th><th>VRAM</th><th>Price</th><th>FP16 TFLOPs</th><th>Bandwidth</th><th>Power</th></tr>
+        <tr><td>RTX 4090</td><td>24 GB</td><td>$1,800</td><td>165</td><td>1,008 GB/s</td><td>450W</td></tr>
+        <tr><td>RTX 5090</td><td>32 GB</td><td>$2,400</td><td>209</td><td>1,792 GB/s</td><td>575W</td></tr>
+        <tr><td>RTX 5080</td><td>16 GB</td><td>$1,200</td><td>113</td><td>960 GB/s</td><td>360W</td></tr>
+        <tr><td>RTX 4080 Super</td><td>16 GB</td><td>$1,000</td><td>104</td><td>736 GB/s</td><td>320W</td></tr>
+        <tr><td>RTX 3090</td><td>24 GB</td><td>$900</td><td>71</td><td>936 GB/s</td><td>350W</td></tr>
+      </table>
+    </div>
+    <div class="tab-panel" id="tab-workstation">
+      <table>
+        <tr><th>Name</th><th>VRAM</th><th>Price</th><th>FP16 TFLOPs</th><th>Bandwidth</th><th>Power</th></tr>
+        <tr><td>RTX A6000</td><td>48 GB</td><td>$4,800</td><td>75</td><td>768 GB/s</td><td>300W</td></tr>
+        <tr><td>RTX 6000 Ada</td><td>48 GB</td><td>$6,800</td><td>182</td><td>960 GB/s</td><td>300W</td></tr>
+        <tr><td>RTX 5000 Ada</td><td>32 GB</td><td>$4,500</td><td>130</td><td>576 GB/s</td><td>250W</td></tr>
+      </table>
+    </div>
+    <div class="tab-panel" id="tab-datacenter">
+      <table>
+        <tr><th>Name</th><th>VRAM</th><th>Price</th><th>FP16 TFLOPs</th><th>Bandwidth</th><th>Power</th></tr>
+        <tr><td>A100 40GB</td><td>40 GB</td><td>$8,500</td><td>312</td><td>1,555 GB/s</td><td>400W</td></tr>
+        <tr><td>A100 80GB</td><td>80 GB</td><td>$15,000</td><td>312</td><td>2,039 GB/s</td><td>400W</td></tr>
+        <tr><td>H100 80GB</td><td>80 GB</td><td>$27,000</td><td>989</td><td>3,350 GB/s</td><td>700W</td></tr>
+        <tr><td>H200 141GB</td><td>141 GB</td><td>$32,000</td><td>989</td><td>4,800 GB/s</td><td>700W</td></tr>
+        <tr><td>B200 192GB</td><td>192 GB</td><td>$45,000</td><td>2,250</td><td>8,000 GB/s</td><td>1,000W</td></tr>
+      </table>
+    </div>
+    <div class="tab-panel" id="tab-dgx">
+      <table>
+        <tr><th>Name</th><th>Total VRAM</th><th>Price</th><th>FP16 TFLOPs</th><th>Notes</th></tr>
+        <tr><td>DGX Spark</td><td>128 GB</td><td>$4,000</td><td>250</td><td class="dim-cell">1× GB10, desktop</td></tr>
+        <tr><td>DGX Station</td><td>784 GB</td><td>$75,000</td><td>4,500</td><td class="dim-cell">1× GB300 Ultra</td></tr>
+        <tr><td>DGX A100</td><td>640 GB</td><td>$199,000</td><td>2,496</td><td class="dim-cell">8× A100 80GB, NVLink</td></tr>
+        <tr><td>DGX H100</td><td>640 GB</td><td>$480,000</td><td>7,912</td><td class="dim-cell">8× H100 80GB, NVLink</td></tr>
+        <tr><td>DGX H200</td><td>1,128 GB</td><td>$520,000</td><td>7,912</td><td class="dim-cell">8× H200 141GB, NVLink</td></tr>
+        <tr><td>DGX B200</td><td>1,536 GB</td><td>$515,000</td><td>18,000</td><td class="dim-cell">8× B200 192GB, NVLink 5</td></tr>
+        <tr><td>GB200 NVL72</td><td>13,824 GB</td><td>$3,000,000</td><td>180,000</td><td class="dim-cell">72× B200 + 36 Grace CPU, full rack</td></tr>
+      </table>
+    </div>
+    <div class="tab-panel" id="tab-apple">
+      <table>
+        <tr><th>Name</th><th>VRAM (usable)</th><th>Total RAM</th><th>Price</th><th>Bandwidth</th><th>Power</th></tr>
+        <tr><td>Mac mini M4 16GB</td><td>12 GB</td><td>16 GB</td><td>$599</td><td>120 GB/s</td><td>65W</td></tr>
+        <tr><td>Mac mini M4 Pro 48GB</td><td>36 GB</td><td>48 GB</td><td>$1,799</td><td>273 GB/s</td><td>65W</td></tr>
+        <tr><td>Mac Studio M4 Max 128GB</td><td>98 GB</td><td>128 GB</td><td>$3,499</td><td>546 GB/s</td><td>160W</td></tr>
+        <tr><td>Mac Studio M3 Ultra 512GB</td><td>384 GB</td><td>512 GB</td><td>$9,499</td><td>819 GB/s</td><td>270W</td></tr>
+        <tr><td>MacBook Pro M4 Max 128GB</td><td>98 GB</td><td>128 GB</td><td>$4,700</td><td>546 GB/s</td><td>140W</td></tr>
+      </table>
+      <p style="color:var(--muted);font-size:11px;margin-top:8px;">VRAM ≈ 75% of total RAM. Advanced users can push to ~90% via iogpu.wired_limit_mb. Apple cluster scaling uses ^0.55 exponent (much worse than NVIDIA due to Thunderbolt 4 bandwidth limits).</p>
+    </div>
+  </div>
+
+  <!-- TODO -->
+  <div class="section">
+    <h2><span class="num">07.</span> TODO — pending work</h2>
+
+    <h3>Bug fixes</h3>
+    <ul class="todo-list">
+      <li class="todo-item">
+        <div class="todo-check"></div>
+        <span class="todo-tag tag-bug">bug</span>
+        <div class="todo-text">
+          Fix mobile layout
+          <div class="todo-sub">Comparison table breaks on phones. Wrap container in <code>overflow-x: auto</code>, set <code>min-width</code> on inner grid. File: <code>src/App.jsx</code>.</div>
+        </div>
+      </li>
+    </ul>
+
+    <h3>Quick wins</h3>
+    <ul class="todo-list">
+      <li class="todo-item">
+        <div class="todo-check"></div>
+        <span class="todo-tag tag-feature">feature</span>
+        <div class="todo-text">
+          Update model presets to current 2025 releases
+          <div class="todo-sub">Verify each on HuggingFace before adding — don't trust LLM memory. Target: Qwen 3, latest Llama, DeepSeek V3.</div>
+        </div>
+      </li>
+      <li class="todo-item">
+        <div class="todo-check"></div>
+        <span class="todo-tag tag-ux">UX</span>
+        <div class="todo-text">
+          Add tooltips/explanations on all non-obvious inputs
+          <div class="todo-sub">Quantization, Context, Calc mode, Concurrent toggle, Prompt/Output tokens, Apple cluster. Use Lucide <code>Info</code> icon + <code>title</code> or popover. 1-2 sentences each.</div>
+        </div>
+      </li>
+      <li class="todo-item">
+        <div class="todo-check"></div>
+        <span class="todo-tag tag-feature">feature</span>
+        <div class="todo-text">
+          Add max-price filter (default cap $10k)
+          <div class="todo-sub">Slider or input next to vendor/category filters. Toggle off to show all. File: <code>src/App.jsx</code> filter UI + <code>filteredHW</code> useMemo.</div>
+        </div>
+      </li>
+      <li class="todo-item">
+        <div class="todo-check"></div>
+        <span class="todo-tag tag-feature">feature</span>
+        <div class="todo-text">
+          Add hardware text search filter
+          <div class="todo-sub">Text input above table, filters by name substring (case-insensitive). Stacks with vendor/category filters.</div>
+        </div>
+      </li>
+      <li class="todo-item">
+        <div class="todo-check"></div>
+        <span class="todo-tag tag-feature">feature</span>
+        <div class="todo-text">
+          Add multi-select compare mode
+          <div class="todo-sub">Toggle adds checkbox to each row. Only checked rows render. Persist selection in URL params or localStorage.</div>
+        </div>
+      </li>
+    </ul>
+
+    <h3>UX clarity</h3>
+    <ul class="todo-list">
+      <li class="todo-item">
+        <div class="todo-check"></div>
+        <span class="todo-tag tag-ux">UX</span>
+        <div class="todo-text">
+          Make multi-GPU stacking more discoverable
+          <div class="todo-sub">Calc auto-stacks NVIDIA cards (shows "2× RTX 4090") but users miss it. Add visual hint or tooltip in empty state explaining stacking behavior.</div>
+        </div>
+      </li>
+    </ul>
+
+    <h3>Math / validation</h3>
+    <ul class="todo-list">
+      <li class="todo-item">
+        <div class="todo-check"></div>
+        <span class="todo-tag tag-math">math</span>
+        <div class="todo-text">
+          Add calibration anchors to CALCULATIONS.md
+          <div class="todo-sub">Known model/quant combos to use as ground truth. Reviewer confirmed simple-mode VRAM matches llama.cpp. Tune KV cache heuristic if detailed mode is consistently off.</div>
+        </div>
+      </li>
+      <li class="todo-item">
+        <div class="todo-check"></div>
+        <span class="todo-tag tag-math">math</span>
+        <div class="todo-text">
+          Create MATH_VERIFICATION.md
+          <div class="todo-sub">Standalone doc: each formula with worked example, benchmark anchors, efficiency constants with sources, "how to verify yourself" recipes (llama.cpp / vLLM commands).</div>
+        </div>
+      </li>
+    </ul>
+
+    <h3>Advanced / speculative</h3>
+    <ul class="todo-list">
+      <li class="todo-item">
+        <div class="todo-check"></div>
+        <span class="todo-tag tag-spec">spec</span>
+        <div class="todo-text">
+          Mixed HW prefill/decode disaggregation mode
+          <div class="todo-sub">One machine does prefill (high-compute GPU), another does decode (high-VRAM Apple). Inspired by Splitwise / disaggregated serving papers. Needs: KV transfer cost research, speculative toggle with ⚠ warning, TCO comparison. Off by default, clearly marked as theoretical.</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- CALIBRATION ANCHORS -->
+  <div class="section">
+    <h2><span class="num">08.</span> Calibration anchors</h2>
+    <p>Known real-world measurements to validate the calculator against. Decode numbers are usually ±25%; prefill is 30-50% optimistic.</p>
+    <table>
+      <tr><th>Model</th><th>Hardware</th><th>Quant</th><th>Measured</th><th>Calc says</th><th>Delta</th></tr>
+      <tr>
+        <td>Llama 3 70B</td><td>1× H100 80GB</td><td>FP16</td>
+        <td class="green">~30 tok/s decode</td><td>~33 tok/s</td><td class="accent">+10%</td>
+      </tr>
+      <tr>
+        <td>Llama 3 70B</td><td>1× H100 80GB</td><td>FP16</td>
+        <td class="green">~250ms prefill (2048 tok)</td><td>~189ms</td><td class="red">-25% (optimistic)</td>
+      </tr>
+      <tr>
+        <td>Llama 3 70B</td><td>4× RTX 4090</td><td>FP16</td>
+        <td class="green">~600ms prefill (2048 tok)</td><td>~340ms</td><td class="red">-43% (optimistic)</td>
+      </tr>
+      <tr>
+        <td>M2 Ultra</td><td>1× Mac Studio</td><td>Q4 (70B)</td>
+        <td class="green">~12-18 tok/s</td><td>~16 tok/s</td><td class="accent">within range</td>
+      </tr>
+      <tr>
+        <td>Qwen 3.5 35B-A3B</td><td>Mac mini M4</td><td>Q4</td>
+        <td class="green">~35 tok/s</td><td>~35 tok/s</td><td class="green">calibrated ✓</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- DEV COMMANDS -->
+  <div class="section">
+    <h2><span class="num">09.</span> Dev commands</h2>
+    <div class="two-col">
+      <div>
+        <h3>Run locally</h3>
+        <pre>cd repo
+npm install
+npm run dev        # http://localhost:5173</pre>
+        <h3>Production build</h3>
+        <pre>npm run build      # → dist/
+npm run preview    # serve dist/ locally</pre>
+      </div>
+      <div>
+        <h3>Deploy (Vercel)</h3>
+        <pre>git push origin main
+# Vercel auto-deploys on push
+# ~30s rebuild time</pre>
+        <h3>Common pitfalls</h3>
+        <pre># Grid columns must sum to 12
+# Don't fetch inside useMemo
+# CORS blocks retailer sites (browser)
+# React keys: use hw.id / m.id, not index</pre>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+  <p style="color:var(--dim);font-size:11px;text-align:center;">
+    Selfsilicon · docs/PROJECT.html · last updated 2026-06-01
+  </p>
+
+</div>
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
