@@ -52,35 +52,33 @@ const HARDWARE = [
 // activeParams (optional): for MoE models, the params active per token.
 // If omitted, model is treated as dense (active = total).
 const KNOWN_MODELS = [
-  // Qwen 3.5 (MoE & dense)
-  { id: 'qwen-3.5-35b-a3b', name: 'Qwen 3.5 35B-A3B (MoE)', params: 35, activeParams: 3 },
+  // Qwen 3.6 — latest (June 2026, verified on HuggingFace)
+  { id: 'qwen-3.6-35b-a3b', name: 'Qwen 3.6 35B-A3B (MoE)', params: 36, activeParams: 3 },
+  { id: 'qwen-3.6-27b',     name: 'Qwen 3.6 27B',            params: 28 },
+  // Qwen 3.5
   { id: 'qwen-3.5-235b-a22b', name: 'Qwen 3.5 235B-A22B (MoE)', params: 235, activeParams: 22 },
-  { id: 'qwen-3.5-72b', name: 'Qwen 3.5 72B', params: 72 },
+  { id: 'qwen-3.5-72b',       name: 'Qwen 3.5 72B',              params: 72 },
   // Qwen 3
   { id: 'qwen-3-32b', name: 'Qwen 3 32B', params: 32 },
-  { id: 'qwen-3-72b', name: 'Qwen 3 72B', params: 72 },
   { id: 'qwen-3-14b', name: 'Qwen 3 14B', params: 14 },
-  // Llama 4
-  { id: 'llama-4-scout', name: 'Llama 4 Scout (MoE)', params: 109, activeParams: 17 },
+  // Llama 4 (verified on HuggingFace)
+  { id: 'llama-4-scout',    name: 'Llama 4 Scout (MoE)',    params: 109, activeParams: 17 },
   { id: 'llama-4-maverick', name: 'Llama 4 Maverick (MoE)', params: 402, activeParams: 17 },
   // Llama 3
   { id: 'llama-3.3-70b', name: 'Llama 3.3 70B', params: 70 },
-  { id: 'llama-3.1-8b', name: 'Llama 3.1 8B', params: 8 },
-  { id: 'llama-3.1-405b', name: 'Llama 3.1 405B', params: 405 },
-  // Mistral / Mixtral
-  { id: 'mistral-large', name: 'Mistral Large 2', params: 123 },
-  { id: 'mixtral-8x7b', name: 'Mixtral 8x7B (MoE)', params: 47, activeParams: 13 },
-  { id: 'mixtral-8x22b', name: 'Mixtral 8x22B (MoE)', params: 141, activeParams: 39 },
-  // DeepSeek
-  { id: 'deepseek-v3', name: 'DeepSeek V3 (MoE)', params: 685, activeParams: 37 },
-  { id: 'deepseek-r1', name: 'DeepSeek R1 (MoE)', params: 685, activeParams: 37 },
+  { id: 'llama-3.1-8b',  name: 'Llama 3.1 8B',  params: 8  },
+  // DeepSeek (verified on HuggingFace)
+  { id: 'deepseek-v4-pro',   name: 'DeepSeek V4 Pro (MoE)',   params: 862, activeParams: 37 },
+  { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash (MoE)', params: 158, activeParams: 18 },
+  { id: 'deepseek-v3',  name: 'DeepSeek V3 (MoE)',  params: 685, activeParams: 37 },
+  { id: 'deepseek-r1',  name: 'DeepSeek R1 (MoE)',  params: 685, activeParams: 37 },
   // Others
-  { id: 'gemma-3-27b', name: 'Gemma 3 27B', params: 27 },
-  { id: 'gemma-2-27b', name: 'Gemma 2 27B', params: 27 },
-  { id: 'phi-4', name: 'Phi 4', params: 14 },
-  { id: 'phi-4-mini', name: 'Phi 4 Mini', params: 3.8 },
-  { id: 'command-r-plus', name: 'Command R+', params: 104 },
-  { id: 'yi-34b', name: 'Yi 34B', params: 34 },
+  { id: 'openai-gpt-oss-120b', name: 'OpenAI GPT-OSS 120B', params: 120 },
+  { id: 'gemma-3-27b',   name: 'Gemma 3 27B',    params: 27  },
+  { id: 'phi-4',         name: 'Phi 4',           params: 14  },
+  { id: 'phi-4-mini',    name: 'Phi 4 Mini',      params: 3.8 },
+  { id: 'mistral-large', name: 'Mistral Large 2', params: 123 },
+  { id: 'mixtral-8x22b', name: 'Mixtral 8x22B (MoE)', params: 141, activeParams: 39 },
 ];
 
 // Quantization
@@ -234,6 +232,25 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
   const [showSearch, setShowSearch] = useState(false);
 
   const [sortMode, setSortMode] = useState('trending'); // 'trending' | 'newest' | 'downloads'
+  const [trendingModels, setTrendingModels] = useState([]);
+  const [loadingTrending, setLoadingTrending] = useState(false);
+
+  const fetchTrending = async () => {
+    setLoadingTrending(true);
+    try {
+      const res = await fetch(
+        'https://huggingface.co/api/models?sort=trendingScore&direction=-1&limit=25&pipeline_tag=text-generation'
+      );
+      const data = await res.json();
+      const parsed = data
+        .map(m => ({ ...m, detectedParams: paramsFromName(m.id) }))
+        .filter(m => m.detectedParams && m.detectedParams > 0);
+      setTrendingModels(parsed);
+    } catch (e) {
+      setTrendingModels([]);
+    }
+    setLoadingTrending(false);
+  };
 
   const searchHF = async () => {
     if (!searchQuery.trim()) return;
@@ -428,6 +445,32 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
               </button>
             ))}
           </div>
+
+          <div className="flex items-center justify-between mt-3 mb-1">
+            <span className="text-xs text-neutral-500">or trending on HuggingFace:</span>
+            <button
+              onClick={fetchTrending}
+              disabled={loadingTrending}
+              className="flex items-center gap-1 text-xs text-neutral-500 hover:text-amber-500 font-mono transition-colors disabled:opacity-50"
+            >
+              {loadingTrending ? <Loader2 size={11} className="animate-spin" /> : <TrendingUp size={11} />}
+              {loadingTrending ? 'fetching…' : 'fetch live'}
+            </button>
+          </div>
+          {trendingModels.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {trendingModels.map(m => (
+                <button
+                  key={m.id}
+                  onClick={() => selectModel(m)}
+                  title={`~${m.detectedParams}B params (from name) · click for exact`}
+                  className="text-xs border border-neutral-700 text-neutral-400 hover:border-amber-500 hover:text-amber-500 px-2 py-0.5"
+                >
+                  {m.id.split('/')[1] ?? m.id}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
