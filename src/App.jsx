@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Plus, X, Cpu, Zap, DollarSign, HardDrive, AlertTriangle, Loader2, TrendingUp, Calculator, ExternalLink } from 'lucide-react';
+import { Search, Plus, X, Cpu, Zap, DollarSign, HardDrive, AlertTriangle, Loader2, TrendingUp, Calculator, ExternalLink, Info } from 'lucide-react';
 
 // ============ DATA: GPU & APPLE ============
 // Prices are approximate (USD, 2025), edit as needed
