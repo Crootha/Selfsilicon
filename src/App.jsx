@@ -1158,9 +1158,9 @@ export default function App() {
             <button onClick={() => setSortBy('total')} className="col-span-2 text-right hover:text-amber-500">TCO {sortBy === 'total' && '↓'}</button>
           </div>
 
-          {(compareMode && compareSelected.size > 0 ? filteredHW.filter(h => compareSelected.has(h.id)) : filteredHW).map(hw => (
+          {filteredHW.map(hw => (
+            <div key={hw.id} className={compareMode && compareSelected.size > 0 && !compareSelected.has(hw.id) ? 'opacity-25' : ''}>
             <HardwareRow
-              key={hw.id}
               hw={hw}
               totalVRAM={totalVRAM}
               modelsCount={models.filter(m => m.params).length}
@@ -1180,6 +1180,7 @@ export default function App() {
                 return next;
               })}
             />
+            </div>
           ))}
         </div>
 
