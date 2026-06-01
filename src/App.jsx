@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Plus, X, Cpu, Zap, DollarSign, HardDrive, AlertTriangle, Loader2, TrendingUp, Calculator, ExternalLink, Info } from 'lucide-react';
+import { Search, Plus, X, Cpu, Zap, DollarSign, HardDrive, AlertTriangle, Loader2, TrendingUp, Calculator, ExternalLink, Info, Check } from 'lucide-react';
 
 // ============ DATA: GPU & APPLE ============
 // Prices are approximate (USD, 2025), edit as needed
@@ -526,7 +526,13 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
       <div className="lg:hidden border-b border-neutral-800 px-4 py-3">
         <div className="flex items-start justify-between mb-1.5">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            {compareMode && <input type="checkbox" checked={isSelected} onChange={onToggleSelect} disabled={!isSelected && !canSelect} className={`flex-shrink-0 w-4 h-4 accent-amber-500 mt-0.5 ${!isSelected && !canSelect ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`} />}
+            <button
+              onClick={e => { e.stopPropagation(); if (isSelected || canSelect) onToggleSelect(); }}
+              title={isSelected ? 'Remove from compare' : canSelect ? 'Add to compare' : 'Max 4 items'}
+              className={`flex-shrink-0 w-5 h-5 flex items-center justify-center border transition-colors ${isSelected ? 'bg-amber-500 border-amber-500 text-neutral-950' : canSelect ? 'border-neutral-700 text-neutral-600 hover:border-amber-500 hover:text-amber-500' : 'border-neutral-800 text-neutral-800 cursor-not-allowed'}`}
+            >
+              {isSelected ? <Check size={10} /> : <Plus size={10} />}
+            </button>
             {!reallyFits && <AlertTriangle size={12} className="text-red-400 flex-shrink-0" />}
             {needed > 1 && (
               <span className="inline-flex items-center justify-center bg-amber-500 text-neutral-950 font-mono text-xs px-1.5 py-0.5 font-bold flex-shrink-0">
@@ -595,7 +601,13 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
       {/* Desktop table row (≥ lg) */}
       <div className="hidden lg:grid grid-cols-12 gap-2 px-3 py-2.5 border-b border-neutral-800 text-sm items-center">
         <div className="col-span-2 flex items-center gap-2">
-          {compareMode && <input type="checkbox" checked={isSelected} onChange={onToggleSelect} disabled={!isSelected && !canSelect} className={`flex-shrink-0 w-3.5 h-3.5 accent-amber-500 ${!isSelected && !canSelect ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`} />}
+          <button
+            onClick={e => { e.stopPropagation(); if (isSelected || canSelect) onToggleSelect(); }}
+            title={isSelected ? 'Remove from compare' : canSelect ? 'Add to compare' : 'Max 4 items'}
+            className={`flex-shrink-0 w-5 h-5 flex items-center justify-center border transition-colors ${isSelected ? 'bg-amber-500 border-amber-500 text-neutral-950' : canSelect ? 'border-neutral-700 text-neutral-600 hover:border-amber-500 hover:text-amber-500' : 'border-neutral-800 text-neutral-800 cursor-not-allowed'}`}
+          >
+            {isSelected ? <Check size={10} /> : <Plus size={10} />}
+          </button>
           {!reallyFits && <AlertTriangle size={12} className="text-red-400" />}
           <div className="min-w-0">
             <div className="font-serif text-neutral-100 flex items-center gap-2">
@@ -1140,14 +1152,24 @@ export default function App() {
               {totalVRAM > 0 && <span className="ml-2 text-amber-500/70">· need {fmt(totalVRAM, 1)}GB total</span>}
             </div>
             <button
-              onClick={() => { setCompareMode(m => !m); setCompareSelected(new Set()); }}
-              className={`text-xs font-mono uppercase px-3 py-1 border transition-colors ${compareMode ? 'bg-amber-500 text-neutral-950 border-amber-500' : 'border-neutral-700 text-neutral-400 hover:border-amber-500 hover:text-amber-500'}`}
+              onClick={() => {
+                if (compareMode) {
+                  setCompareMode(false);
+                } else if (compareSelected.size >= 2) {
+                  setCompareMode(true);
+                }
+              }}
+              className={`text-xs font-mono uppercase px-3 py-1 border transition-colors ${
+                compareMode ? 'bg-amber-500 text-neutral-950 border-amber-500'
+                : compareSelected.size >= 2 ? 'border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-neutral-950'
+                : compareSelected.size === 1 ? 'border-neutral-600 text-neutral-400'
+                : 'border-neutral-700 text-neutral-500'
+              }`}
             >
-              {compareMode
-                ? compareSelected.size === 0 ? '× exit compare'
-                : compareSelected.size === 1 ? '1 selected — pick 1 more'
-                : `comparing ${compareSelected.size}`
-                : 'compare'}
+              {compareMode ? '× exit compare'
+                : compareSelected.size === 0 ? 'compare'
+                : compareSelected.size === 1 ? '+1 more to compare'
+                : `compare (${compareSelected.size}) →`}
             </button>
           </div>
         </div>
@@ -1235,14 +1257,20 @@ export default function App() {
             >
               <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-neutral-950 transition-transform ${maxPriceEnabled ? 'translate-x-4' : 'translate-x-0.5'}`}></div>
             </button>
-            <span className="text-xs font-mono text-neutral-500 uppercase">max $</span>
+            <span className="text-xs font-mono text-neutral-500 uppercase flex-shrink-0">max $</span>
             {maxPriceEnabled && (
-              <input
-                type="number"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(parseInt(e.target.value) || 0)}
-                className="w-20 bg-neutral-950 border border-neutral-700 px-2 py-0.5 text-xs text-neutral-200 font-mono"
-              />
+              <>
+                <input
+                  type="range"
+                  min={500}
+                  max={100000}
+                  step={500}
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(parseInt(e.target.value))}
+                  className="w-24 accent-amber-500 cursor-pointer"
+                />
+                <span className="text-xs font-mono text-neutral-300 flex-shrink-0">{fmtMoney(maxPrice)}</span>
+              </>
             )}
           </div>
         </div>
@@ -1268,11 +1296,9 @@ export default function App() {
         )}
 
         {/* Compare mode hint */}
-        {compareMode && compareItems.length < 2 && (
-          <div className="mb-4 px-4 py-3 border border-dashed border-neutral-700 text-xs text-neutral-500 font-mono">
-            {compareSelected.size === 0
-              ? '← check items to compare — select 2 to 4'
-              : '← select 1 more to show the comparison panel'}
+        {!compareMode && compareSelected.size >= 1 && compareSelected.size < 2 && (
+          <div className="mb-4 px-3 py-2 border border-dashed border-neutral-700 text-xs text-neutral-500 font-mono">
+            + select 1 more item then click compare →
           </div>
         )}
 
@@ -1290,8 +1316,8 @@ export default function App() {
             <button onClick={() => setSortBy('total')} className="col-span-2 text-right hover:text-amber-500">TCO {sortBy === 'total' && '↓'}</button>
           </div>
 
-          {filteredHW.map(hw => (
-            <div key={hw.id} className={compareMode && compareSelected.has(hw.id) ? 'border-l-2 border-amber-500' : 'border-l-2 border-transparent'}>
+          {(compareMode ? compareItems : filteredHW).map(hw => (
+            <div key={hw.id} className={!compareMode && compareSelected.has(hw.id) ? 'border-l-2 border-amber-500' : 'border-l-2 border-transparent'}>
               <HardwareRow
                 hw={hw}
                 totalVRAM={totalVRAM}
