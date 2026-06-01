@@ -81,6 +81,17 @@ const KNOWN_MODELS = [
   { id: 'mixtral-8x22b', name: 'Mixtral 8x22B (MoE)', params: 141, activeParams: 39 },
 ];
 
+// Model families — maps family label to KNOWN_MODELS ids in display order
+const MODEL_FAMILIES = {
+  Qwen:     ['qwen-3.6-35b-a3b', 'qwen-3.6-27b', 'qwen-3.5-235b-a22b', 'qwen-3.5-72b', 'qwen-3-32b', 'qwen-3-14b'],
+  Llama:    ['llama-4-scout', 'llama-4-maverick', 'llama-3.3-70b', 'llama-3.1-8b'],
+  DeepSeek: ['deepseek-v4-pro', 'deepseek-v4-flash', 'deepseek-v3', 'deepseek-r1'],
+  Gemma:    ['gemma-3-27b'],
+  Phi:      ['phi-4', 'phi-4-mini'],
+  Mistral:  ['mistral-large', 'mixtral-8x22b'],
+  Other:    ['openai-gpt-oss-120b'],
+};
+
 // Quantization
 const QUANT_OPTIONS = [
   { id: 'fp16', name: 'FP16 (16-bit)', bytesPerParam: 2 },
@@ -234,6 +245,7 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
   const [sortMode, setSortMode] = useState('trending'); // 'trending' | 'newest' | 'downloads'
   const [trendingModels, setTrendingModels] = useState([]);
   const [loadingTrending, setLoadingTrending] = useState(false);
+  const [selectedFamily, setSelectedFamily] = useState(null);
 
   const fetchTrending = async () => {
     setLoadingTrending(true);
@@ -433,21 +445,43 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
             </div>
           )}
 
-          <div className="text-xs text-neutral-500 mb-1 mt-2">or from presets:</div>
-          <div className="flex flex-wrap gap-1">
-            {KNOWN_MODELS.map((km) => (
+          {/* Family-grouped presets */}
+          <div className="text-xs text-neutral-500 mb-1.5 mt-2">or from presets:</div>
+          <div className="flex flex-wrap gap-1 mb-2">
+            {Object.keys(MODEL_FAMILIES).map(fam => (
               <button
-                key={km.id}
-                onClick={() => selectKnown(km)}
-                className="text-xs border border-neutral-700 text-neutral-300 hover:border-amber-500 hover:text-amber-500 px-2 py-0.5"
+                key={fam}
+                onClick={() => setSelectedFamily(selectedFamily === fam ? null : fam)}
+                className={`text-xs font-mono uppercase px-2.5 py-1 border transition-colors ${selectedFamily === fam ? 'bg-amber-500 text-neutral-950 border-amber-500' : 'border-neutral-700 text-neutral-400 hover:border-amber-500 hover:text-amber-500'}`}
               >
-                {km.name}
+                {fam}
               </button>
             ))}
           </div>
+          {selectedFamily && (
+            <div className="border border-neutral-800 bg-neutral-950 mb-2">
+              {MODEL_FAMILIES[selectedFamily].map(id => {
+                const km = KNOWN_MODELS.find(m => m.id === id);
+                if (!km) return null;
+                const isMoE = km.activeParams && km.activeParams < km.params;
+                return (
+                  <button
+                    key={km.id}
+                    onClick={() => { selectKnown(km); setSelectedFamily(null); }}
+                    className="flex items-center justify-between w-full px-3 py-2 text-xs hover:bg-neutral-800 transition-colors border-b border-neutral-800 last:border-b-0 text-left"
+                  >
+                    <span className="text-neutral-200">{km.name}</span>
+                    <span className="text-neutral-500 flex-shrink-0 ml-3">
+                      {km.params}B{isMoE && <span className="text-orange-400/80 ml-1">· MoE {km.activeParams}B active</span>}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
-          <div className="flex items-center justify-between mt-3 mb-1">
-            <span className="text-xs text-neutral-500">or trending on HuggingFace:</span>
+          <div className="flex items-center justify-between mt-1 mb-1">
+            <span className="text-xs text-neutral-500">trending on HuggingFace:</span>
             <button
               onClick={fetchTrending}
               disabled={loadingTrending}
