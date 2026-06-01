@@ -526,13 +526,6 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
       <div className="lg:hidden border-b border-neutral-800 px-4 py-3">
         <div className="flex items-start justify-between mb-1.5">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <button
-              onClick={e => { e.stopPropagation(); if (isSelected || canSelect) onToggleSelect(); }}
-              title={isSelected ? 'Remove from compare' : canSelect ? 'Add to compare' : 'Max 4 items'}
-              className={`flex-shrink-0 w-5 h-5 flex items-center justify-center border transition-colors ${isSelected ? 'bg-amber-500 border-amber-500 text-neutral-950' : canSelect ? 'border-neutral-700 text-neutral-600 hover:border-amber-500 hover:text-amber-500' : 'border-neutral-800 text-neutral-800 cursor-not-allowed'}`}
-            >
-              {isSelected ? <Check size={10} /> : <Plus size={10} />}
-            </button>
             {!reallyFits && <AlertTriangle size={12} className="text-red-400 flex-shrink-0" />}
             {needed > 1 && (
               <span className="inline-flex items-center justify-center bg-amber-500 text-neutral-950 font-mono text-xs px-1.5 py-0.5 font-bold flex-shrink-0">
@@ -540,6 +533,13 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
               </span>
             )}
             <span className="font-serif text-neutral-100 truncate">{hw.name}</span>
+            <button
+              onClick={e => { e.stopPropagation(); if (isSelected || canSelect) onToggleSelect(); }}
+              title={isSelected ? 'Remove from compare' : canSelect ? 'Add to compare' : 'Max 4 items'}
+              className={`flex-shrink-0 w-5 h-5 flex items-center justify-center border transition-colors ${isSelected ? 'bg-amber-500 border-amber-500 text-neutral-950' : canSelect ? 'border-neutral-700 text-neutral-600 hover:border-amber-500 hover:text-amber-500' : 'border-neutral-800 text-neutral-800 cursor-not-allowed'}`}
+            >
+              {isSelected ? <Check size={10} /> : <Plus size={10} />}
+            </button>
           </div>
           <span className="font-mono text-amber-500 ml-3 flex-shrink-0">{fmtMoney(totalPrice)}</span>
         </div>
@@ -601,15 +601,8 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
       {/* Desktop table row (≥ lg) */}
       <div className="hidden lg:grid grid-cols-12 gap-2 px-3 py-2.5 border-b border-neutral-800 text-sm items-center">
         <div className="col-span-2 flex items-center gap-2">
-          <button
-            onClick={e => { e.stopPropagation(); if (isSelected || canSelect) onToggleSelect(); }}
-            title={isSelected ? 'Remove from compare' : canSelect ? 'Add to compare' : 'Max 4 items'}
-            className={`flex-shrink-0 w-5 h-5 flex items-center justify-center border transition-colors ${isSelected ? 'bg-amber-500 border-amber-500 text-neutral-950' : canSelect ? 'border-neutral-700 text-neutral-600 hover:border-amber-500 hover:text-amber-500' : 'border-neutral-800 text-neutral-800 cursor-not-allowed'}`}
-          >
-            {isSelected ? <Check size={10} /> : <Plus size={10} />}
-          </button>
           {!reallyFits && <AlertTriangle size={12} className="text-red-400" />}
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="font-serif text-neutral-100 flex items-center gap-2">
               {needed > 1 && (
                 <span className="inline-flex items-center justify-center bg-amber-500 text-neutral-950 font-mono text-xs px-1.5 py-0.5 font-bold">
@@ -624,6 +617,13 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
               {isAppleCluster && <span className="text-orange-400/80 ml-1" title="EXO/llama.cpp RPC over Thunderbolt — significant performance penalty">· cluster ⚠</span>}
             </div>
           </div>
+          <button
+            onClick={e => { e.stopPropagation(); if (isSelected || canSelect) onToggleSelect(); }}
+            title={isSelected ? 'Remove from compare' : canSelect ? 'Add to compare' : 'Max 4 items'}
+            className={`flex-shrink-0 w-5 h-5 flex items-center justify-center border transition-colors ${isSelected ? 'bg-amber-500 border-amber-500 text-neutral-950' : canSelect ? 'border-neutral-700 text-neutral-600 hover:border-amber-500 hover:text-amber-500' : 'border-neutral-800 text-neutral-800 cursor-not-allowed'}`}
+          >
+            {isSelected ? <Check size={10} /> : <Plus size={10} />}
+          </button>
         </div>
         <div className="col-span-1 text-right font-mono">
           <div className="text-neutral-100">
