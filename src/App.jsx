@@ -1212,10 +1212,10 @@ export default function App() {
             ))}
           </select>
         </div>
-        {/* Filters */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          <div className="flex flex-wrap gap-1">
-            <span className="text-xs text-neutral-500 font-mono uppercase mr-2 self-center">vendor:</span>
+        {/* Filters — row 1: vendor + category */}
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-2">
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="text-xs text-neutral-500 font-mono uppercase mr-1 flex-shrink-0">vendor:</span>
             {['all', 'NVIDIA', 'Apple'].map(v => (
               <button
                 key={v}
@@ -1226,8 +1226,8 @@ export default function App() {
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap gap-1 ml-2">
-            <span className="text-xs text-neutral-500 font-mono uppercase mr-2 self-center">category:</span>
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="text-xs text-neutral-500 font-mono uppercase mr-1 flex-shrink-0">category:</span>
             {['all', 'consumer', 'workstation', 'datacenter', 'dgx', 'apple'].map(c => (
               <button
                 key={c}
@@ -1238,47 +1238,65 @@ export default function App() {
               </button>
             ))}
           </div>
-          <label className="flex gap-1.5 ml-2 items-center cursor-pointer">
-            <button
-              onClick={() => setAppleCluster(!appleCluster)}
-              className={`w-8 h-4 rounded-full relative transition-colors ${appleCluster ? 'bg-orange-500' : 'bg-neutral-700'}`}
-            >
-              <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-neutral-950 transition-transform ${appleCluster ? 'translate-x-4' : 'translate-x-0.5'}`}></div>
-            </button>
-            <span className={`text-xs font-mono uppercase tracking-wider ${appleCluster ? 'text-orange-400' : 'text-neutral-500'}`}>
-              Apple cluster {appleCluster && '⚠'}
-            </span>
-            <TooltipIcon text="Stack multiple Apple machines via EXO or llama.cpp RPC over Thunderbolt. Fits huge models but scaling is poor (~1.4× speed for 2 nodes) due to Thunderbolt bandwidth limits vs NVLink." />
-          </label>
-          <div className="flex items-center gap-2 ml-2">
-            <button
-              onClick={() => setMaxPriceEnabled(e => !e)}
-              className={`w-8 h-4 rounded-full relative transition-colors flex-shrink-0 ${maxPriceEnabled ? 'bg-amber-500' : 'bg-neutral-700'}`}
-            >
-              <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-neutral-950 transition-transform ${maxPriceEnabled ? 'translate-x-4' : 'translate-x-0.5'}`}></div>
-            </button>
-            <span className="text-xs font-mono text-neutral-500 uppercase flex-shrink-0">max $</span>
-            {maxPriceEnabled && (
-              <>
-                <input
-                  type="range"
-                  min={500}
-                  max={100000}
-                  step={500}
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(parseInt(e.target.value))}
-                  className="w-24 accent-amber-500 cursor-pointer"
-                />
-                <span className="text-xs font-mono text-neutral-300 flex-shrink-0">{fmtMoney(maxPrice)}</span>
-              </>
-            )}
-          </div>
         </div>
-        {appleCluster && (
-          <div className="text-xs text-orange-400/80 mb-3 -mt-2 leading-relaxed">
-            ⚠ Apple machines clustered via <a href="https://github.com/exo-explore/exo" target="_blank" rel="noopener noreferrer" className="text-orange-300 underline">EXO</a> or llama.cpp RPC over Thunderbolt. Sublinear scaling: 2 nodes ≈ 1.4× speed, 4 nodes ≈ 2.1× speed (Thunderbolt bandwidth is ~80× slower than NVLink). Great for fitting huge models you couldn't otherwise run; not great if you need maximum tok/s.
+
+        {/* Filters — row 2: budget cap slider */}
+        <div className="flex items-center gap-3 mb-2 px-3 py-2 border border-neutral-800 bg-neutral-900/30">
+          <button
+            onClick={() => setMaxPriceEnabled(e => !e)}
+            className={`w-8 h-4 rounded-full relative transition-colors flex-shrink-0 ${maxPriceEnabled ? 'bg-amber-500' : 'bg-neutral-700'}`}
+          >
+            <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-neutral-950 transition-transform ${maxPriceEnabled ? 'translate-x-4' : 'translate-x-0.5'}`}></div>
+          </button>
+          <span className="text-xs font-mono text-neutral-500 uppercase flex-shrink-0">Budget cap</span>
+          {maxPriceEnabled ? (
+            <>
+              <span className="text-xs text-neutral-700 flex-shrink-0 hidden sm:inline">$500</span>
+              <input
+                type="range"
+                min={500}
+                max={100000}
+                step={500}
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(parseInt(e.target.value))}
+                className="flex-1 min-w-0 accent-amber-500 cursor-pointer"
+              />
+              <span className="text-xs text-neutral-700 flex-shrink-0 hidden sm:inline">$100k</span>
+              <span className="text-xs font-mono text-amber-400 flex-shrink-0 w-16 text-right">{fmtMoney(maxPrice)}</span>
+            </>
+          ) : (
+            <span className="text-xs text-neutral-600 italic">off — showing all prices</span>
+          )}
+        </div>
+
+        {/* Filters — row 3: Apple cluster (advanced, contextual) */}
+        <div className={`mb-4 px-3 py-2.5 border text-xs transition-colors ${appleCluster ? 'border-orange-500/30 bg-orange-950/20' : 'border-neutral-800 bg-neutral-900/20'}`}>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                onClick={() => setAppleCluster(!appleCluster)}
+                className={`w-8 h-4 rounded-full relative transition-colors flex-shrink-0 ${appleCluster ? 'bg-orange-500' : 'bg-neutral-700'}`}
+              >
+                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-neutral-950 transition-transform ${appleCluster ? 'translate-x-4' : 'translate-x-0.5'}`}></div>
+              </button>
+              <div className="min-w-0">
+                <span className={`font-mono uppercase tracking-wider ${appleCluster ? 'text-orange-400' : 'text-neutral-500'}`}>
+                  Apple cluster {appleCluster && '⚠'}
+                </span>
+                <span className="text-neutral-600 ml-2">
+                  {appleCluster
+                    ? 'active — table now shows stacked Apple configs'
+                    : 'run one model split across multiple Macs via EXO / Thunderbolt'}
+                </span>
+              </div>
+            </div>
           </div>
-        )}
+          {appleCluster && (
+            <div className="mt-2 text-orange-400/70 leading-relaxed pl-10">
+              ⚠ Sublinear scaling: 2 nodes ≈ 1.4× speed, 4 nodes ≈ 2.1× speed — Thunderbolt bandwidth is ~180× slower than NVLink. Good for fitting huge models; not for maximum tok/s. Uses <a href="https://github.com/exo-explore/exo" target="_blank" rel="noopener noreferrer" className="text-orange-300 underline">EXO</a> or llama.cpp RPC.
+            </div>
+          )}
+        </div>
 
         {/* Compare panel — appears when ≥2 items checked */}
         {compareMode && compareItems.length >= 2 && (
@@ -1358,6 +1376,9 @@ export default function App() {
           <div><span className="text-amber-500">★</span> Apple unified memory: usable VRAM ≈ 75% of total RAM (reserve for system).</div>
           <div><span className="text-amber-500">★</span> TCO = HW price + power × 24h × 30d × 50% utilization × months × $/kWh.</div>
           <div><span className="text-amber-500">★</span> GPU prices change over time - table is approximate as of 2025.</div>
+          <div className="pt-3 mt-2 border-t border-neutral-800/50">
+            New to AI terminology? <a href="docs/educAItion.html" target="_blank" rel="noopener noreferrer" className="text-amber-500/70 hover:text-amber-500 underline decoration-dotted">educAItion — plain-English guide to VRAM, quantization, MoE, and more ↗</a>
+          </div>
         </div>
       </div>
     </div>
