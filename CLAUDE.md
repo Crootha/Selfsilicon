@@ -59,6 +59,7 @@ src/App.jsx
 - `HARDWARE[].tflops_fp16` = dense FP16, no sparsity
 - `KNOWN_MODELS[].params` = total params in billions (MoE: total, not active)
 - `QUANT_OPTIONS[].bytesPerParam` is the only field used in math
+- `HARDWARE[].category` values: `gaming` (30xx–50xx GeForce), `workstation` (A-series, Ada RTX), `datacenter`, `dgx`, `apple`
 - DGX entries have `units: N` (internal GPU count); they can't be further stacked
 - Apple cluster stacking requires `appleCluster=true` toggle; uses 0.55 scaling exponent
 

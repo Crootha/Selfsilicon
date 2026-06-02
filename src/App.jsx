@@ -5,16 +5,41 @@ import { Search, Plus, X, Cpu, Zap, DollarSign, HardDrive, AlertTriangle, Loader
 // Prices are approximate (USD, 2025), edit as needed
 // bandwidth_gbs = memory bandwidth in GB/s (critical for decode speed)
 const HARDWARE = [
-  // NVIDIA Consumer
-  { id: 'rtx4090', vendor: 'NVIDIA', name: 'RTX 4090', vram: 24, price: 1800, tflops_fp16: 165, bandwidth_gbs: 1008, power: 450, category: 'consumer' },
-  { id: 'rtx5090', vendor: 'NVIDIA', name: 'RTX 5090', vram: 32, price: 2400, tflops_fp16: 209, bandwidth_gbs: 1792, power: 575, category: 'consumer' },
-  { id: 'rtx4080s', vendor: 'NVIDIA', name: 'RTX 4080 Super', vram: 16, price: 1000, tflops_fp16: 104, bandwidth_gbs: 736, power: 320, category: 'consumer' },
-  { id: 'rtx3090', vendor: 'NVIDIA', name: 'RTX 3090', vram: 24, price: 900, tflops_fp16: 71, bandwidth_gbs: 936, power: 350, category: 'consumer' },
-  { id: 'rtx5080', vendor: 'NVIDIA', name: 'RTX 5080', vram: 16, price: 1200, tflops_fp16: 113, bandwidth_gbs: 960, power: 360, category: 'consumer' },
-  // NVIDIA Pro
-  { id: 'a6000', vendor: 'NVIDIA', name: 'RTX A6000', vram: 48, price: 4800, tflops_fp16: 75, bandwidth_gbs: 768, power: 300, category: 'workstation' },
-  { id: 'a6000ada', vendor: 'NVIDIA', name: 'RTX 6000 Ada', vram: 48, price: 6800, tflops_fp16: 182, bandwidth_gbs: 960, power: 300, category: 'workstation' },
-  { id: 'rtx5000ada', vendor: 'NVIDIA', name: 'RTX 5000 Ada', vram: 32, price: 4500, tflops_fp16: 130, bandwidth_gbs: 576, power: 250, category: 'workstation' },
+  // NVIDIA Gaming — 30xx series
+  { id: 'rtx3060', vendor: 'NVIDIA', name: 'RTX 3060 12GB', vram: 12, price: 200, tflops_fp16: 14, bandwidth_gbs: 360, power: 170, category: 'gaming' },
+  { id: 'rtx3060ti', vendor: 'NVIDIA', name: 'RTX 3060 Ti 8GB', vram: 8, price: 250, tflops_fp16: 32, bandwidth_gbs: 448, power: 200, category: 'gaming' },
+  { id: 'rtx3070', vendor: 'NVIDIA', name: 'RTX 3070 8GB', vram: 8, price: 300, tflops_fp16: 41, bandwidth_gbs: 448, power: 220, category: 'gaming' },
+  { id: 'rtx3070ti', vendor: 'NVIDIA', name: 'RTX 3070 Ti 8GB', vram: 8, price: 350, tflops_fp16: 43, bandwidth_gbs: 608, power: 290, category: 'gaming' },
+  { id: 'rtx3080', vendor: 'NVIDIA', name: 'RTX 3080 10GB', vram: 10, price: 400, tflops_fp16: 60, bandwidth_gbs: 760, power: 320, category: 'gaming' },
+  { id: 'rtx3080ti', vendor: 'NVIDIA', name: 'RTX 3080 Ti 12GB', vram: 12, price: 500, tflops_fp16: 68, bandwidth_gbs: 912, power: 350, category: 'gaming' },
+  { id: 'rtx3090', vendor: 'NVIDIA', name: 'RTX 3090 24GB', vram: 24, price: 700, tflops_fp16: 71, bandwidth_gbs: 936, power: 350, category: 'gaming' },
+  { id: 'rtx3090ti', vendor: 'NVIDIA', name: 'RTX 3090 Ti 24GB', vram: 24, price: 800, tflops_fp16: 80, bandwidth_gbs: 936, power: 450, category: 'gaming' },
+  // NVIDIA Gaming — 40xx series
+  { id: 'rtx4060', vendor: 'NVIDIA', name: 'RTX 4060 8GB', vram: 8, price: 300, tflops_fp16: 30, bandwidth_gbs: 272, power: 115, category: 'gaming' },
+  { id: 'rtx4060ti8', vendor: 'NVIDIA', name: 'RTX 4060 Ti 8GB', vram: 8, price: 400, tflops_fp16: 44, bandwidth_gbs: 288, power: 160, category: 'gaming' },
+  { id: 'rtx4060ti16', vendor: 'NVIDIA', name: 'RTX 4060 Ti 16GB', vram: 16, price: 500, tflops_fp16: 44, bandwidth_gbs: 288, power: 165, category: 'gaming' },
+  { id: 'rtx4070', vendor: 'NVIDIA', name: 'RTX 4070 12GB', vram: 12, price: 550, tflops_fp16: 58, bandwidth_gbs: 504, power: 200, category: 'gaming' },
+  { id: 'rtx4070s', vendor: 'NVIDIA', name: 'RTX 4070 Super 12GB', vram: 12, price: 590, tflops_fp16: 71, bandwidth_gbs: 504, power: 220, category: 'gaming' },
+  { id: 'rtx4070ti', vendor: 'NVIDIA', name: 'RTX 4070 Ti 12GB', vram: 12, price: 700, tflops_fp16: 80, bandwidth_gbs: 504, power: 285, category: 'gaming' },
+  { id: 'rtx4070tis', vendor: 'NVIDIA', name: 'RTX 4070 Ti Super 16GB', vram: 16, price: 790, tflops_fp16: 88, bandwidth_gbs: 672, power: 285, category: 'gaming' },
+  { id: 'rtx4080s', vendor: 'NVIDIA', name: 'RTX 4080 Super 16GB', vram: 16, price: 1000, tflops_fp16: 104, bandwidth_gbs: 736, power: 320, category: 'gaming' },
+  { id: 'rtx4090', vendor: 'NVIDIA', name: 'RTX 4090 24GB', vram: 24, price: 1800, tflops_fp16: 165, bandwidth_gbs: 1008, power: 450, category: 'gaming' },
+  // NVIDIA Gaming — 50xx series
+  { id: 'rtx5070', vendor: 'NVIDIA', name: 'RTX 5070 12GB', vram: 12, price: 600, tflops_fp16: 61, bandwidth_gbs: 672, power: 250, category: 'gaming' },
+  { id: 'rtx5070ti', vendor: 'NVIDIA', name: 'RTX 5070 Ti 16GB', vram: 16, price: 750, tflops_fp16: 88, bandwidth_gbs: 896, power: 300, category: 'gaming' },
+  { id: 'rtx5080', vendor: 'NVIDIA', name: 'RTX 5080 16GB', vram: 16, price: 1200, tflops_fp16: 113, bandwidth_gbs: 960, power: 360, category: 'gaming' },
+  { id: 'rtx5090', vendor: 'NVIDIA', name: 'RTX 5090 32GB', vram: 32, price: 2400, tflops_fp16: 209, bandwidth_gbs: 1792, power: 575, category: 'gaming' },
+  // NVIDIA Workstation — Ampere
+  { id: 'rtxa2000_12', vendor: 'NVIDIA', name: 'RTX A2000 12GB', vram: 12, price: 500, tflops_fp16: 16, bandwidth_gbs: 192, power: 70, category: 'workstation' },
+  { id: 'rtxa4000', vendor: 'NVIDIA', name: 'RTX A4000 16GB', vram: 16, price: 900, tflops_fp16: 38, bandwidth_gbs: 448, power: 140, category: 'workstation' },
+  { id: 'rtxa5000', vendor: 'NVIDIA', name: 'RTX A5000 24GB', vram: 24, price: 1600, tflops_fp16: 56, bandwidth_gbs: 768, power: 230, category: 'workstation' },
+  { id: 'a6000', vendor: 'NVIDIA', name: 'RTX A6000 48GB', vram: 48, price: 4800, tflops_fp16: 75, bandwidth_gbs: 768, power: 300, category: 'workstation' },
+  // NVIDIA Workstation — Ada Lovelace
+  { id: 'rtx4000ada', vendor: 'NVIDIA', name: 'RTX 4000 Ada 20GB', vram: 20, price: 1200, tflops_fp16: 38, bandwidth_gbs: 360, power: 130, category: 'workstation' },
+  { id: 'rtx4000sffada', vendor: 'NVIDIA', name: 'RTX 4000 SFF Ada 20GB', vram: 20, price: 1200, tflops_fp16: 38, bandwidth_gbs: 360, power: 70, category: 'workstation' },
+  { id: 'rtx4500ada', vendor: 'NVIDIA', name: 'RTX 4500 Ada 24GB', vram: 24, price: 2000, tflops_fp16: 50, bandwidth_gbs: 432, power: 210, category: 'workstation' },
+  { id: 'rtx5000ada', vendor: 'NVIDIA', name: 'RTX 5000 Ada 32GB', vram: 32, price: 4500, tflops_fp16: 130, bandwidth_gbs: 576, power: 250, category: 'workstation' },
+  { id: 'a6000ada', vendor: 'NVIDIA', name: 'RTX 6000 Ada 48GB', vram: 48, price: 6800, tflops_fp16: 182, bandwidth_gbs: 960, power: 300, category: 'workstation' },
   // NVIDIA Datacenter
   { id: 'a100_40', vendor: 'NVIDIA', name: 'A100 40GB', vram: 40, price: 8500, tflops_fp16: 312, bandwidth_gbs: 1555, power: 400, category: 'datacenter' },
   { id: 'a100_80', vendor: 'NVIDIA', name: 'A100 80GB', vram: 80, price: 15000, tflops_fp16: 312, bandwidth_gbs: 2039, power: 400, category: 'datacenter' },
@@ -446,7 +471,17 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
           )}
 
           {/* Family-grouped presets */}
-          <div className="text-xs text-neutral-500 mb-1.5 mt-2">or from presets:</div>
+          <div className="flex items-center justify-between mb-1.5 mt-2">
+            <span className="text-xs text-neutral-500">or from presets:</span>
+            <button
+              onClick={fetchTrending}
+              disabled={loadingTrending}
+              className="flex items-center gap-1 text-xs text-neutral-500 hover:text-amber-500 font-mono transition-colors disabled:opacity-50"
+            >
+              {loadingTrending ? <Loader2 size={11} className="animate-spin" /> : <TrendingUp size={11} />}
+              {loadingTrending ? 'fetching…' : 'fetch live'}
+            </button>
+          </div>
           <div className="flex flex-wrap gap-1 mb-2">
             {Object.keys(MODEL_FAMILIES).map(fam => (
               <button
@@ -457,8 +492,16 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
                 {fam}
               </button>
             ))}
+            {trendingModels.length > 0 && (
+              <button
+                onClick={() => setSelectedFamily(selectedFamily === '__live__' ? null : '__live__')}
+                className={`text-xs font-mono uppercase px-2.5 py-1 border transition-colors ${selectedFamily === '__live__' ? 'bg-amber-500 text-neutral-950 border-amber-500' : 'border-amber-500/50 text-amber-500/70 hover:border-amber-500 hover:text-amber-500'}`}
+              >
+                Live ↻
+              </button>
+            )}
           </div>
-          {selectedFamily && (
+          {selectedFamily && selectedFamily !== '__live__' && (
             <div className="border border-neutral-800 bg-neutral-950 mb-2">
               {MODEL_FAMILIES[selectedFamily].map(id => {
                 const km = KNOWN_MODELS.find(m => m.id === id);
@@ -479,28 +522,17 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
               })}
             </div>
           )}
-
-          <div className="flex items-center justify-between mt-1 mb-1">
-            <span className="text-xs text-neutral-500">trending on HuggingFace:</span>
-            <button
-              onClick={fetchTrending}
-              disabled={loadingTrending}
-              className="flex items-center gap-1 text-xs text-neutral-500 hover:text-amber-500 font-mono transition-colors disabled:opacity-50"
-            >
-              {loadingTrending ? <Loader2 size={11} className="animate-spin" /> : <TrendingUp size={11} />}
-              {loadingTrending ? 'fetching…' : 'fetch live'}
-            </button>
-          </div>
-          {trendingModels.length > 0 && (
-            <div className="flex flex-wrap gap-1">
+          {selectedFamily === '__live__' && trendingModels.length > 0 && (
+            <div className="border border-neutral-800 bg-neutral-950 mb-2">
               {trendingModels.map(m => (
                 <button
                   key={m.id}
-                  onClick={() => selectModel(m)}
-                  title={`~${m.detectedParams}B params (from name) · click for exact`}
-                  className="text-xs border border-neutral-700 text-neutral-400 hover:border-amber-500 hover:text-amber-500 px-2 py-0.5"
+                  onClick={() => { selectModel(m); setSelectedFamily(null); }}
+                  title={`~${m.detectedParams}B params (name-parsed) · click for exact from HF`}
+                  className="flex items-center justify-between w-full px-3 py-2 text-xs hover:bg-neutral-800 transition-colors border-b border-neutral-800 last:border-b-0 text-left"
                 >
-                  {m.id.split('/')[1] ?? m.id}
+                  <span className="text-neutral-200 truncate">{m.id.split('/')[1] ?? m.id}</span>
+                  <span className="text-neutral-500 flex-shrink-0 ml-3">~{m.detectedParams}B</span>
                 </button>
               ))}
             </div>
@@ -1008,7 +1040,10 @@ export default function App() {
             <div className="text-xs font-mono text-amber-500 tracking-[0.3em] uppercase">
               ▮▮▮ GPU / VRAM / COST_CALCULATOR
             </div>
-            <div className="text-xs font-mono text-neutral-600">v1.0 · {new Date().toISOString().slice(0,10)}</div>
+            <div className="flex items-center gap-4">
+              <a href="/docs/educAItion.html" target="_blank" rel="noopener noreferrer" className="text-xs font-mono text-neutral-500 hover:text-amber-500 transition-colors tracking-wider uppercase">educAItion ↗</a>
+              <div className="text-xs font-mono text-neutral-600">v1.0 · {new Date().toISOString().slice(0,10)}</div>
+            </div>
           </div>
           <h1 className="font-serif text-5xl md:text-6xl text-neutral-100 leading-none tracking-tight">
             how much <span className="italic text-amber-500">silicon</span> do you need
@@ -1305,7 +1340,7 @@ export default function App() {
           </div>
           <div className="flex flex-wrap items-center gap-1">
             <span className="text-xs text-neutral-500 font-mono uppercase mr-1 flex-shrink-0">category:</span>
-            {['all', 'consumer', 'workstation', 'datacenter', 'dgx', 'apple'].map(c => (
+            {['all', 'gaming', 'workstation', 'datacenter', 'dgx', 'apple'].map(c => (
               <button
                 key={c}
                 onClick={() => setCategoryFilter(c)}
@@ -1454,7 +1489,7 @@ export default function App() {
           <div><span className="text-amber-500">★</span> TCO = HW price + power × 24h × 30d × 50% utilization × months × $/kWh.</div>
           <div><span className="text-amber-500">★</span> GPU prices change over time - table is approximate as of 2025.</div>
           <div className="pt-3 mt-2 border-t border-neutral-800/50">
-            New to AI terminology? <a href="docs/educAItion.html" target="_blank" rel="noopener noreferrer" className="text-amber-500/70 hover:text-amber-500 underline decoration-dotted">educAItion — plain-English guide to VRAM, quantization, MoE, and more ↗</a>
+            New to AI terminology? <a href="/docs/educAItion.html" target="_blank" rel="noopener noreferrer" className="text-amber-500/70 hover:text-amber-500 underline decoration-dotted">educAItion — plain-English guide to VRAM, quantization, MoE, and more ↗</a>
           </div>
         </div>
       </div>
