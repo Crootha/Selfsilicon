@@ -251,6 +251,23 @@ function getRetailerLinks(hw) {
   };
 }
 
+// ============ AGENT MODE HELPERS ============
+
+const isECC = (hw) => ['workstation', 'datacenter', 'dgx'].includes(hw.category);
+const isSustained = (hw) => ['workstation', 'datacenter', 'dgx', 'apple'].includes(hw.category);
+
+function parallelAgents(hw, modelVRAM) {
+  return Math.max(0, Math.floor(hw.vram / Math.max(modelVRAM, 0.1)));
+}
+
+function agentScore(hw, modelVRAM) {
+  const eccPts   = isECC(hw) ? 30 : 0;
+  const sustPts  = isSustained(hw) ? 25 : 0;
+  const agentPts = Math.min(parallelAgents(hw, modelVRAM), 4) * 5;
+  const vpdPts   = Math.min((hw.vram / hw.price * 1000) / 0.3, 25);
+  return Math.round(eccPts + sustPts + agentPts + vpdPts);
+}
+
 // ============ COMPONENTS ============
 
 function TooltipIcon({ text }) {
@@ -576,7 +593,7 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
   );
 }
 
-function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRate, promptTokens, outputTokens, modelParams, modelQuant, modelActiveParams, appleCluster, compareMode, isSelected, canSelect, onToggleSelect }) {
+function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRate, promptTokens, outputTokens, modelParams, modelQuant, modelActiveParams, appleCluster, hwMode, compareMode, isSelected, canSelect, onToggleSelect }) {
   // How many units of this HW are needed to fit the model(s)?
   // NVIDIA standalone cards: stack via tensor parallelism
   // Apple machines: stack via EXO / llama.cpp RPC (only if appleCluster=true; performance penalty is severe)
@@ -665,26 +682,47 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
               {reallyFits && <span className="text-emerald-500 ml-1">+{headroom.toFixed(0)}%</span>}
             </span>
           </div>
-          <div className="flex justify-between gap-2">
-            <span className="text-neutral-500">$/GB</span>
-            <span className="font-mono">${costPerGB.toFixed(0)}</span>
-          </div>
-          <div className="flex justify-between gap-2">
-            <span className="text-neutral-500">Bandwidth</span>
-            <span className="font-mono">{fmt(hw.bandwidth_gbs, 0)} GB/s</span>
-          </div>
-          <div className="flex justify-between gap-2">
-            <span className="text-neutral-500">Power</span>
-            <span className="font-mono">{totalPower}W</span>
-          </div>
-          <div className="flex justify-between gap-2">
-            <span className="text-neutral-500">Prefill</span>
-            <span className="font-mono text-amber-500">{latency ? fmtMs(latency.prefillMs) : '–'}</span>
-          </div>
-          <div className="flex justify-between gap-2">
-            <span className="text-neutral-500">Decode</span>
-            <span className="font-mono text-emerald-400">{latency ? `~${fmt(latency.tokensPerSec, 0)} tok/s` : '–'}</span>
-          </div>
+          {hwMode === 'agent' ? <>
+            <div className="flex justify-between gap-2">
+              <span className="text-neutral-500">Agents</span>
+              <span className={`font-mono ${parallelAgents(hw, totalVRAM) >= 2 ? 'text-emerald-400' : parallelAgents(hw, totalVRAM) === 1 ? 'text-orange-400' : 'text-red-400'}`}>
+                {parallelAgents(hw, totalVRAM) >= 1 ? `${parallelAgents(hw, totalVRAM)}×` : '—'}
+              </span>
+            </div>
+            <div className="flex justify-between gap-2">
+              <span className="text-neutral-500">ECC</span>
+              <span className={`font-mono ${isECC(hw) ? 'text-emerald-400' : 'text-neutral-600'}`}>{isECC(hw) ? 'ECC ✓' : 'no ECC'}</span>
+            </div>
+            <div className="flex justify-between gap-2">
+              <span className="text-neutral-500">Throttle</span>
+              <span className={`font-mono ${isSustained(hw) ? 'text-emerald-400' : 'text-orange-400'}`}>{isSustained(hw) ? '✓ sustained' : '⚠ throttles'}</span>
+            </div>
+            <div className="flex justify-between gap-2">
+              <span className="text-neutral-500">Score</span>
+              <span className={`font-mono font-bold ${agentScore(hw, totalVRAM) >= 70 ? 'text-emerald-400' : agentScore(hw, totalVRAM) >= 40 ? 'text-amber-500' : 'text-neutral-600'}`}>{agentScore(hw, totalVRAM)}</span>
+            </div>
+          </> : <>
+            <div className="flex justify-between gap-2">
+              <span className="text-neutral-500">$/GB</span>
+              <span className="font-mono">${costPerGB.toFixed(0)}</span>
+            </div>
+            <div className="flex justify-between gap-2">
+              <span className="text-neutral-500">Bandwidth</span>
+              <span className="font-mono">{fmt(hw.bandwidth_gbs, 0)} GB/s</span>
+            </div>
+            <div className="flex justify-between gap-2">
+              <span className="text-neutral-500">Power</span>
+              <span className="font-mono">{totalPower}W</span>
+            </div>
+            <div className="flex justify-between gap-2">
+              <span className="text-neutral-500">Prefill</span>
+              <span className="font-mono text-amber-500">{latency ? fmtMs(latency.prefillMs) : '–'}</span>
+            </div>
+            <div className="flex justify-between gap-2">
+              <span className="text-neutral-500">Decode</span>
+              <span className="font-mono text-emerald-400">{latency ? `~${fmt(latency.tokensPerSec, 0)} tok/s` : '–'}</span>
+            </div>
+          </>}
           <div className="flex justify-between gap-2">
             <span className="text-neutral-500">Energy</span>
             <span className="font-mono text-neutral-400">+{fmtMoney(electricityCost)}</span>
@@ -756,23 +794,50 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
             )}
           </div>
         </div>
-        <div className="col-span-1 text-right font-mono text-neutral-300 text-xs">${costPerGB.toFixed(0)}/GB</div>
-        <div className="col-span-1 text-right font-mono text-neutral-300 text-xs">
-          <div className="text-neutral-100">{fmt(hw.bandwidth_gbs, 0)}</div>
-          <div className="text-neutral-600">GB/s</div>
-        </div>
-        <div className="col-span-1 text-right">
-          <div className="font-mono text-amber-500">{latency ? fmtMs(latency.prefillMs) : '–'}</div>
-          <div className="text-xs text-neutral-600">prefill (TTFT)</div>
-        </div>
-        <div className="col-span-1 text-right">
-          <div className="font-mono text-emerald-400">{latency ? `~${fmt(latency.tokensPerSec, 0)}` : '–'}</div>
-          <div className="text-xs text-neutral-600">tok/s decode</div>
-        </div>
-        <div className="col-span-1 text-right font-mono text-neutral-300">
-          {totalPower}W
-          {needed > 1 && <div className="text-xs text-neutral-500">{hw.power}W ea.</div>}
-        </div>
+        {hwMode === 'agent' ? <>
+          <div className="col-span-1 text-right">
+            <div className={`font-mono ${parallelAgents(hw, totalVRAM) >= 2 ? 'text-emerald-400' : parallelAgents(hw, totalVRAM) === 1 ? 'text-orange-400' : 'text-red-400'}`}>
+              {parallelAgents(hw, totalVRAM) >= 1 ? `${parallelAgents(hw, totalVRAM)}×` : '—'}
+            </div>
+            <div className="text-xs text-neutral-600">agents</div>
+          </div>
+          <div className="col-span-1 text-right">
+            <div className={`font-mono text-xs ${isECC(hw) ? 'text-emerald-400' : 'text-neutral-600'}`}>{isECC(hw) ? 'ECC ✓' : 'no ECC'}</div>
+          </div>
+          <div className="col-span-1 text-right">
+            <div className={`font-mono text-xs ${isSustained(hw) ? 'text-emerald-400' : 'text-orange-400'}`}>{isSustained(hw) ? '✓ sustain' : '⚠ throttle'}</div>
+          </div>
+          <div className="col-span-2 text-right">
+            {(() => {
+              const sc = agentScore(hw, totalVRAM);
+              const cls = sc >= 70 ? 'text-emerald-400' : sc >= 40 ? 'text-amber-500' : 'text-neutral-600';
+              return <>
+                <div className={`font-mono font-bold ${cls}`}>{sc}</div>
+                <div className="w-full h-1 bg-neutral-800 mt-1 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full ${sc >= 70 ? 'bg-emerald-400' : sc >= 40 ? 'bg-amber-500' : 'bg-neutral-600'}`} style={{ width: `${sc}%` }} />
+                </div>
+              </>;
+            })()}
+          </div>
+        </> : <>
+          <div className="col-span-1 text-right font-mono text-neutral-300 text-xs">${costPerGB.toFixed(0)}/GB</div>
+          <div className="col-span-1 text-right font-mono text-neutral-300 text-xs">
+            <div className="text-neutral-100">{fmt(hw.bandwidth_gbs, 0)}</div>
+            <div className="text-neutral-600">GB/s</div>
+          </div>
+          <div className="col-span-1 text-right">
+            <div className="font-mono text-amber-500">{latency ? fmtMs(latency.prefillMs) : '–'}</div>
+            <div className="text-xs text-neutral-600">prefill (TTFT)</div>
+          </div>
+          <div className="col-span-1 text-right">
+            <div className="font-mono text-emerald-400">{latency ? `~${fmt(latency.tokensPerSec, 0)}` : '–'}</div>
+            <div className="text-xs text-neutral-600">tok/s decode</div>
+          </div>
+          <div className="col-span-1 text-right font-mono text-neutral-300">
+            {totalPower}W
+            {needed > 1 && <div className="text-xs text-neutral-500">{hw.power}W ea.</div>}
+          </div>
+        </>}
         <div className="col-span-2 text-right">
           <div className="font-mono text-amber-500">{fmtMoney(totalCost)}</div>
           <div className="text-xs text-neutral-500">+{fmtMoney(electricityCost)} energy</div>
@@ -900,6 +965,7 @@ export default function App() {
   const [hwSearch, setHwSearch] = useState('');
   const [compareMode, setCompareMode] = useState(false);
   const [compareSelected, setCompareSelected] = useState(new Set());
+  const [hwMode, setHwMode] = useState('inference'); // 'inference' | 'agent'
 
   const addModel = () => {
     setModels([...models, { id: Date.now(), name: '', params: 0, quant: 'fp16', context: 8192, source: null, activeParams: null }]);
@@ -966,6 +1032,8 @@ export default function App() {
       const aFits = fitsScaled(a) ? 0 : 1;
       const bFits = fitsScaled(b) ? 0 : 1;
       if (aFits !== bFits) return aFits - bFits;
+      // Agent mode: sort by composite agent score descending
+      if (hwMode === 'agent') return agentScore(b, totalVRAM) - agentScore(a, totalVRAM);
       const aN = neededCount(a);
       const bN = neededCount(b);
       const aPrice = a.price * aN;
@@ -996,7 +1064,7 @@ export default function App() {
       return 0;
     });
     return hw;
-  }, [vendorFilter, categoryFilter, sortBy, totalVRAM, runtimeMonths, electricityRate, promptTokens, outputTokens, primaryModel, appleCluster, hwSearch, maxPrice, maxPriceEnabled]);
+  }, [vendorFilter, categoryFilter, sortBy, totalVRAM, runtimeMonths, electricityRate, promptTokens, outputTokens, primaryModel, appleCluster, hwSearch, maxPrice, maxPriceEnabled, hwMode]);
 
   // Items selected for side-by-side compare panel
   const compareItems = useMemo(() => {
@@ -1432,18 +1500,66 @@ export default function App() {
           </div>
         )}
 
+        {/* Mode toggle — Inference vs Agent */}
+        <div className="flex items-center gap-3 mb-3 px-3 py-2.5 border border-neutral-800 bg-neutral-900/30">
+          <div className="flex gap-1">
+            <button
+              onClick={() => setHwMode('inference')}
+              className={`px-3 py-1 text-xs font-mono uppercase ${hwMode === 'inference' ? 'bg-amber-500 text-neutral-950' : 'border border-neutral-700 text-neutral-400 hover:border-amber-500 hover:text-amber-500'}`}
+            >
+              ⚡ Inference
+            </button>
+            <button
+              onClick={() => setHwMode('agent')}
+              className={`px-3 py-1 text-xs font-mono uppercase ${hwMode === 'agent' ? 'bg-amber-500 text-neutral-950' : 'border border-neutral-700 text-neutral-400 hover:border-amber-500 hover:text-amber-500'}`}
+            >
+              🤖 Agent
+            </button>
+          </div>
+          <span className="text-xs text-neutral-500">
+            {hwMode === 'inference'
+              ? 'decode speed · prefill TTFT · TCO'
+              : 'parallel capacity · ECC · sustained load · agent score ↓'}
+          </span>
+        </div>
+
+        {/* Agent mode callout */}
+        {hwMode === 'agent' && (
+          <div className="mb-3 px-3 py-2.5 border border-amber-500/20 bg-amber-950/10 text-xs text-neutral-400 leading-relaxed">
+            <span className="text-amber-500 font-mono uppercase tracking-wider">🤖 Agent mode</span>
+            <span className="ml-2">— ranked by suitability for 24/7 agentic workloads. </span>
+            <span className="text-neutral-500">
+              <strong className="text-neutral-300">Agents</strong> = simultaneous instances in VRAM. &nbsp;
+              <strong className="text-neutral-300">ECC</strong> = error-correcting memory (prevents silent bit-flips over long runs). &nbsp;
+              <strong className="text-neutral-300">Throttle</strong> = gaming GPUs reduce clock speed under sustained AI load. &nbsp;
+              <strong className="text-neutral-300">Score</strong> = ECC(30) + sustained(25) + parallel agents(up to 20) + VRAM/$(up to 25).
+            </span>
+          </div>
+        )}
+
         {/* Table */}
         <div className="border border-neutral-800 bg-neutral-900/30">
           <div className="hidden lg:grid grid-cols-12 gap-2 px-3 py-2 text-xs font-mono uppercase text-neutral-500 border-b border-neutral-800 bg-neutral-900/60">
-            <button onClick={() => setSortBy('name')} className="col-span-2 text-left">Hardware</button>
-            <button onClick={() => setSortBy('vram')} className="col-span-1 text-right hover:text-amber-500">VRAM {sortBy === 'vram' && '↓'}</button>
-            <button onClick={() => setSortBy('price')} className="col-span-2 text-right hover:text-amber-500">Price {sortBy === 'price' && '↓'}</button>
-            <button onClick={() => setSortBy('costPerGB')} className="col-span-1 text-right hover:text-amber-500">$/GB {sortBy === 'costPerGB' && '↓'}</button>
-            <button onClick={() => setSortBy('bandwidth')} className="col-span-1 text-right hover:text-amber-500">Mem BW {sortBy === 'bandwidth' && '↓'}</button>
-            <button onClick={() => setSortBy('prefill')} className="col-span-1 text-right hover:text-amber-500">Prefill {sortBy === 'prefill' && '↓'}</button>
-            <button onClick={() => setSortBy('decode')} className="col-span-1 text-right hover:text-amber-500">Decode {sortBy === 'decode' && '↓'}</button>
-            <button onClick={() => setSortBy('power')} className="col-span-1 text-right hover:text-amber-500">Power {sortBy === 'power' && '↓'}</button>
-            <button onClick={() => setSortBy('total')} className="col-span-2 text-right hover:text-amber-500">TCO {sortBy === 'total' && '↓'}</button>
+            {hwMode === 'inference' ? <>
+              <button onClick={() => setSortBy('name')} className="col-span-2 text-left">Hardware</button>
+              <button onClick={() => setSortBy('vram')} className="col-span-1 text-right hover:text-amber-500">VRAM {sortBy === 'vram' && '↓'}</button>
+              <button onClick={() => setSortBy('price')} className="col-span-2 text-right hover:text-amber-500">Price {sortBy === 'price' && '↓'}</button>
+              <button onClick={() => setSortBy('costPerGB')} className="col-span-1 text-right hover:text-amber-500">$/GB {sortBy === 'costPerGB' && '↓'}</button>
+              <button onClick={() => setSortBy('bandwidth')} className="col-span-1 text-right hover:text-amber-500">Mem BW {sortBy === 'bandwidth' && '↓'}</button>
+              <button onClick={() => setSortBy('prefill')} className="col-span-1 text-right hover:text-amber-500">Prefill {sortBy === 'prefill' && '↓'}</button>
+              <button onClick={() => setSortBy('decode')} className="col-span-1 text-right hover:text-amber-500">Decode {sortBy === 'decode' && '↓'}</button>
+              <button onClick={() => setSortBy('power')} className="col-span-1 text-right hover:text-amber-500">Power {sortBy === 'power' && '↓'}</button>
+              <button onClick={() => setSortBy('total')} className="col-span-2 text-right hover:text-amber-500">TCO {sortBy === 'total' && '↓'}</button>
+            </> : <>
+              <div className="col-span-2">Hardware</div>
+              <div className="col-span-1 text-right">VRAM</div>
+              <div className="col-span-2 text-right">Price</div>
+              <div className="col-span-1 text-right">Agents</div>
+              <div className="col-span-1 text-right">ECC</div>
+              <div className="col-span-1 text-right">Throttle</div>
+              <div className="col-span-2 text-right text-amber-500">Score ↓</div>
+              <div className="col-span-2 text-right">TCO</div>
+            </>}
           </div>
 
           {(compareMode ? compareItems : filteredHW).map(hw => (
@@ -1460,6 +1576,7 @@ export default function App() {
                 modelQuant={primaryModel ? primaryModel.quant : 'fp16'}
                 modelActiveParams={primaryModel ? primaryModel.activeParams : null}
                 appleCluster={appleCluster}
+                hwMode={hwMode}
                 compareMode={compareMode}
                 isSelected={compareSelected.has(hw.id)}
                 canSelect={compareSelected.size < 4}
@@ -1488,6 +1605,9 @@ export default function App() {
           <div><span className="text-amber-500">★</span> Apple unified memory: usable VRAM ≈ 75% of total RAM (reserve for system).</div>
           <div><span className="text-amber-500">★</span> TCO = HW price + power × 24h × 30d × 50% utilization × months × $/kWh.</div>
           <div><span className="text-amber-500">★</span> GPU prices change over time - table is approximate as of 2025.</div>
+          {hwMode === 'agent' && <>
+            <div className="mt-2 pt-2 border-t border-neutral-800/50"><span className="text-amber-500">★</span> <strong className="text-neutral-300">Agent mode</strong>: <strong className="text-neutral-300">Agents</strong> = simultaneous instances that fit in VRAM (total VRAM ÷ model size). <strong className="text-neutral-300">ECC</strong> = error-correcting memory — workstation/datacenter only; prevents silent data corruption on 24/7 runs. <strong className="text-neutral-300">Throttle</strong> = gaming GPUs reduce clock speed under sustained load; workstation, datacenter, and Apple Silicon hold rated speed. <strong className="text-neutral-300">Score</strong> = ECC(30) + sustained(25) + agents(up to 20) + VRAM/$(up to 25).</div>
+          </>}
           <div className="pt-3 mt-2 border-t border-neutral-800/50">
             New to AI terminology? <a href="/docs/EducAItion.html" target="_blank" rel="noopener noreferrer" className="text-amber-500/70 hover:text-amber-500 underline decoration-dotted">EducAItion — plain-English guide to VRAM, quantization, MoE, and more ↗</a>
           </div>
