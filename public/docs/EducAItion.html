@@ -331,6 +331,7 @@ kv_cache_GB ≈ (2 × layers × d_model × context_tokens × batch × 2 bytes) /
 
       <p>The intuition for decode: to generate each new token, the GPU must read every weight in the model once. On an H100 with 3.35 TB/s bandwidth, a 70B FP16 model takes: 140 GB ÷ 3,350 GB/s ≈ 42ms per token → ~24 tok/s. That's it — compute barely matters, bandwidth is the ceiling.</p>
       <p>This is why Apple Silicon is surprisingly competitive at decode despite low TFLOPS: the M4 Ultra's unified memory architecture gives it 800+ GB/s of bandwidth with no PCIe bottleneck, and power efficiency that datacenter GPUs can't match.</p>
+      <p><strong>Cloud providers go further</strong> and run prefill and decode on <em>separate machines</em> — a high-TFLOPS GPU cluster handles prefill, a high-bandwidth cluster handles the decode stream. This is called disaggregated serving (Splitwise, Mooncake). The KV cache transfers between them after prefill. At home, the transfer overhead over PCIe or Thunderbolt would erase any gain — your single GPU does both phases and that's the right call.</p>
 
       <div class="example">
         <div class="example-label">Real calibration points</div>
