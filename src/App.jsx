@@ -1099,6 +1099,33 @@ export default function App() {
         }
         select { background-color: #0a0a0a; color: #e5e5e5; }
         select option { background: #0a0a0a; }
+        .educ-ai {
+          color: #ffffff;
+          font-size: 16px;
+          font-weight: 800;
+          letter-spacing: .02em;
+          margin: 0 2px;
+          vertical-align: -1px;
+          display: inline-block;
+          text-shadow: 0 0 6px rgba(255,255,255,.4), 0 0 12px rgba(255,255,255,.18);
+          animation: educ-glow 3s ease-in-out infinite;
+          transform-origin: center bottom;
+          transition: transform .2s cubic-bezier(.34,1.56,.64,1), letter-spacing .2s ease, text-shadow .2s ease;
+        }
+        @keyframes educ-glow {
+          0%,100% { text-shadow: 0 0 6px rgba(255,255,255,.35), 0 0 12px rgba(255,255,255,.15); }
+          50%     { text-shadow: 0 0 14px rgba(255,255,255,.85), 0 0 28px rgba(255,255,255,.28); }
+        }
+        .educ-ai-btn:hover .educ-ai {
+          transform: scale(1.22);
+          letter-spacing: .06em;
+          text-shadow: 0 0 16px rgba(255,255,255,.95), 0 0 32px rgba(255,255,255,.55), 0 0 50px rgba(255,220,100,.3);
+          animation: educ-glow-hot .55s ease-in-out infinite;
+        }
+        @keyframes educ-glow-hot {
+          0%,100% { text-shadow: 0 0 12px rgba(255,255,255,.9), 0 0 24px rgba(255,255,255,.5); }
+          50%     { text-shadow: 0 0 20px rgba(255,255,255,1), 0 0 40px rgba(255,255,255,.7), 0 0 60px rgba(255,220,80,.45); }
+        }
       `}</style>
 
       {/* HEADER */}
@@ -1109,7 +1136,7 @@ export default function App() {
               ▮▮▮ GPU / VRAM / COST_CALCULATOR
             </div>
             <div className="flex items-center gap-4">
-              <a href="/docs/EducAItion.html" target="_blank" rel="noopener noreferrer" className="px-3 py-1 text-xs font-mono uppercase border border-neutral-700 text-neutral-400 hover:border-amber-500 hover:text-amber-500 transition-colors">EducAItion ↗</a>
+              <a href="/docs/EducAItion.html" target="_blank" rel="noopener noreferrer" className="educ-ai-btn inline-flex items-baseline bg-amber-500 text-neutral-950 px-4 py-1.5 transition-opacity hover:opacity-90" style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: '14px', letterSpacing: '.01em', lineHeight: 1 }}>Educ<span className="educ-ai">AI</span>tion<span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', fontWeight: 400, marginLeft: '5px', opacity: 0.7 }}>↗</span></a>
               <div className="text-xs font-mono text-neutral-600">v1.0 · {new Date().toISOString().slice(0,10)}</div>
             </div>
           </div>
