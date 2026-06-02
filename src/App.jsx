@@ -873,7 +873,7 @@ function CompareTable({ items, totalVRAM, runtimeMonths, electricityRate, prompt
     const needed = canStack && totalVRAM > 0 ? Math.ceil(totalVRAM / hw.vram) : 1;
     const vramOverhead = hw.vendor === 'Apple' ? 0.15 : 0.1;
     const effectiveVRAM = hw.vram * needed * (needed === 1 ? 1 : 1 - vramOverhead * (needed - 1) / needed);
-    const reallyFits = canStack ? true : effectiveVRAM >= totalVRAM;
+    const reallyFits = effectiveVRAM >= totalVRAM;
     const totalPrice = hw.price * needed;
     const totalPower = hw.power * needed;
     const costPerGB = totalPrice / (hw.vram * needed);
@@ -919,7 +919,7 @@ function CompareTable({ items, totalVRAM, runtimeMonths, electricityRate, prompt
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-xs font-mono border-collapse">
+        <table className="w-full text-xs font-mono border-collapse" style={{ minWidth: '720px' }}>
           <thead>
             <tr className="border-b border-neutral-800">
               <th className="px-2 py-3 w-8" />
