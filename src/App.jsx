@@ -616,7 +616,9 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
   // DGX systems: already a box, can't be further stacked here
   const canMultiGPU = (hw.vendor === 'NVIDIA' && hw.category !== 'dgx') || (hw.vendor === 'Apple' && appleCluster);
   const rawNeeded = totalVRAM > 0 ? Math.ceil(totalVRAM / hw.vram) : 1;
-  const needed = canMultiGPU ? rawNeeded : 1;
+  // Realistic PCIe slot limits: gaming boards fit 4 cards max; server/workstation boards ~8.
+  const maxStack = hw.category === 'gaming' ? 4 : 8;
+  const needed = canMultiGPU ? Math.min(rawNeeded, maxStack) : 1;
   const fits = canMultiGPU ? true : hw.vram >= totalVRAM;
   // VRAM loss per extra unit:
   //   NVIDIA tensor parallelism: ~10% per extra GPU (NVLink/PCIe overhead)
@@ -870,7 +872,8 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
 function CompareTable({ items, totalVRAM, runtimeMonths, electricityRate, promptTokens, outputTokens, primaryModel, appleCluster, onClose, onRemove }) {
   const stats = items.map(hw => {
     const canStack = (hw.vendor === 'NVIDIA' && hw.category !== 'dgx') || (hw.vendor === 'Apple' && appleCluster);
-    const needed = canStack && totalVRAM > 0 ? Math.ceil(totalVRAM / hw.vram) : 1;
+    const maxStack = hw.category === 'gaming' ? 4 : 8;
+    const needed = canStack && totalVRAM > 0 ? Math.min(Math.ceil(totalVRAM / hw.vram), maxStack) : 1;
     const vramOverhead = hw.vendor === 'Apple' ? 0.15 : 0.1;
     const effectiveVRAM = hw.vram * needed * (needed === 1 ? 1 : 1 - vramOverhead * (needed - 1) / needed);
     const reallyFits = effectiveVRAM >= totalVRAM;
