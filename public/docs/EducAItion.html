@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EducAItion — AI Concepts Explained</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --surface2: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #f59e0b;
+    --accent2: #fb923c;
+    --text: #e5e5e5;
+    --muted: #737373;
+    --dim: #404040;
+    --green: #34d399;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --purple: #a78bfa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .page { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* Header */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px;
+    margin-bottom: 48px;
+    background-image:
+      linear-gradient(rgba(245,158,11,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,158,11,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .header-label { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  h1 { font-family: 'Fraunces', Georgia, serif; font-size: 48px; font-weight: 700; line-height: 1.1; margin-bottom: 12px; }
+  h1 em { color: var(--accent); font-style: italic; }
+  .subtitle { color: var(--muted); max-width: 580px; font-size: 13px; }
+
+  /* Nav */
+  .toc { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 48px; }
+  .toc a { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; padding: 4px 10px; border: 1px solid var(--border); color: var(--muted); transition: all 0.15s; }
+  .toc a:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+
+  /* Concept card */
+  .concept { margin-bottom: 40px; scroll-margin-top: 24px; }
+  .concept-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; border-left: 3px solid var(--accent); padding-left: 14px; }
+  .concept-id { font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--accent); flex-shrink: 0; }
+  h2 { font-family: 'Fraunces', Georgia, serif; font-size: 22px; font-weight: 500; color: var(--text); }
+  .concept-body { padding-left: 17px; }
+  p { color: var(--muted); margin-bottom: 10px; }
+  p strong { color: var(--text); }
+
+  /* Example box */
+  .example {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green);
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .example-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--green); margin-bottom: 4px; }
+
+  /* Formula */
+  .formula {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--green);
+    margin: 8px 0;
+    overflow-x: auto;
+  }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
+  th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--muted); border-bottom: 1px solid var(--border); padding: 6px 10px; background: var(--surface); }
+  td { padding: 6px 10px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .dim { color: var(--muted); }
+  .accent { color: var(--accent); }
+  .green { color: var(--green); }
+  .red { color: var(--red); }
+  .blue { color: var(--blue); }
+  .purple { color: var(--purple); }
+  td code { background: var(--surface2); padding: 1px 5px; font-size: 11px; color: var(--accent2); }
+
+  /* Divider */
+  hr { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+
+  /* Section heading */
+  .section-title {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.3em;
+    color: var(--accent); margin-bottom: 24px; margin-top: 48px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+
+  /* Callout */
+  .callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 10px 14px; margin: 12px 0; color: var(--muted); font-size: 12px; }
+  .callout strong { color: var(--text); }
+
+  /* VS box */
+  .vs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0; }
+  .vs-card { background: var(--surface); border: 1px solid var(--border); padding: 14px; }
+  .vs-card-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 10px; }
+  .vs-card ul { list-style: none; padding: 0; }
+  .vs-card li { padding: 3px 0; font-size: 12px; color: var(--muted); }
+  .vs-card li::before { content: '→ '; color: var(--accent); }
+  @media (max-width: 600px) { .vs-grid { grid-template-columns: 1fr; } h1 { font-size: 32px; } }
+
+  /* Learn more links */
+  .learn-more { font-size: 11px; color: var(--dim); margin-top: 8px; }
+  .learn-more a { color: var(--muted); }
+  .learn-more a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-label">▮▮▮ Selfsilicon · Docs</div>
+    <h1>educ<em>AI</em>tion</h1>
+    <p class="subtitle">
+      Plain-English explanations of the AI/LLM concepts behind the calculator.
+      No PhD required — just curiosity.
+    </p>
+  </div>
+
+  <nav class="toc">
+    <a href="#vram">VRAM</a>
+    <a href="#params">Parameters</a>
+    <a href="#quant">Quantization</a>
+    <a href="#context">Context window</a>
+    <a href="#kvcache">KV cache</a>
+    <a href="#tokens">Tokens</a>
+    <a href="#moe">MoE</a>
+    <a href="#prefill-decode">Prefill vs Decode</a>
+    <a href="#inference-training">Inference vs Training</a>
+    <a href="#multiGPU">Multi-GPU</a>
+    <a href="#smart">What makes a model smart</a>
+    <a href="#benchmarks">Benchmarks</a>
+    <a href="#workstation-vs-gaming">Workstation vs Gaming GPU</a>
+  </nav>
+
+  <!-- ===== FUNDAMENTALS ===== -->
+  <div class="section-title">▮ The fundamentals</div>
+
+  <div class="concept" id="vram">
+    <div class="concept-header">
+      <span class="concept-id">01</span>
+      <h2>VRAM — why it's the bottleneck</h2>
+    </div>
+    <div class="concept-body">
+      <p>VRAM is the memory built into a GPU. When you run an AI model, every weight (number) in the model has to live in VRAM while inference runs — not in your regular RAM, not on your SSD. If the model doesn't fit, it either can't run at all or crawls because it has to page data in from slower memory.</p>
+      <p>Regular RAM is fast enough for most tasks but sits on the other side of a bottleneck (PCIe bus) from the GPU. Accessing it mid-inference would kill performance. The GPU needs all the weights <strong>right there</strong>, addressable at memory-bandwidth speeds of 1–8 TB/s.</p>
+      <div class="example">
+        <div class="example-label">Concrete example</div>
+        A 70B parameter model at FP16 = 70 × 2 bytes = <strong>140 GB of VRAM</strong>. An RTX 4090 has 24 GB. It doesn't fit. A single H100 has 80 GB — still doesn't fit at full precision, but fits at INT4 (35 GB).
+      </div>
+      <p class="learn-more">Related in the calculator: the Total VRAM display, Simple vs Detailed mode, the red "doesn't fit" dim on hardware rows.</p>
+    </div>
+  </div>
+
+  <div class="concept" id="params">
+    <div class="concept-header">
+      <span class="concept-id">02</span>
+      <h2>Parameters — what's actually in a model</h2>
+    </div>
+    <div class="concept-body">
+      <p>A model's parameters (also called weights) are just <strong>numbers</strong> — billions of floating-point values tuned during training so that when you multiply your input through layer after layer of them, useful text comes out the other side.</p>
+      <p>"70B model" means 70 billion such numbers. They encode everything the model knows: grammar, facts, reasoning patterns, coding conventions. You can't point at a single weight and say "this one knows Paris is the capital of France" — it's distributed across the whole network.</p>
+      <p>More parameters generally means the model can hold more knowledge and handle more complex tasks — but only up to a point, and only if training was done well. A well-trained 7B model can outperform a poorly-trained 70B on specific tasks.</p>
+      <div class="example">
+        <div class="example-label">The VRAM math</div>
+        <code>VRAM (GB) ≈ params (B) × bytes_per_param</code><br>
+        FP16: 70B × 2 = 140 GB | INT4: 70B × 0.5 = 35 GB
+      </div>
+    </div>
+  </div>
+
+  <div class="concept" id="quant">
+    <div class="concept-header">
+      <span class="concept-id">03</span>
+      <h2>Quantization — trading precision for size</h2>
+    </div>
+    <div class="concept-body">
+      <p>Each parameter is a number stored in a certain format. <strong>Quantization</strong> is the process of storing those numbers in fewer bits — shrinking the model to fit in less VRAM, at the cost of some precision. Think of it like converting a 24-bit color image to an 8-bit one: smaller file, slightly washed-out colors.</p>
+
+      <table>
+        <tr><th>Format</th><th>Bits/param</th><th>Bytes/param</th><th>70B model</th><th>Quality</th></tr>
+        <tr><td>FP32</td><td>32</td><td>4.0</td><td class="dim">280 GB</td><td class="green">reference</td></tr>
+        <tr><td>FP16 / BF16</td><td>16</td><td>2.0</td><td class="dim">140 GB</td><td class="green">≈ lossless</td></tr>
+        <tr><td>FP8</td><td>8</td><td>1.0</td><td class="dim">70 GB</td><td class="green">excellent</td></tr>
+        <tr><td>INT8</td><td>8</td><td>1.0</td><td class="dim">70 GB</td><td class="accent">very good</td></tr>
+        <tr><td>Q5 (5-bit)</td><td>5</td><td>0.625</td><td class="dim">43 GB</td><td class="accent">good</td></tr>
+        <tr><td>INT4 / Q4</td><td>4</td><td>0.5</td><td class="dim">35 GB</td><td class="accent">good — sweet spot</td></tr>
+        <tr><td>Q3 (3-bit)</td><td>3</td><td>0.375</td><td class="dim">26 GB</td><td class="red">noticeable loss</td></tr>
+      </table>
+
+      <p><strong>Q4 is the practical sweet spot</strong> for local use: half the VRAM of FP16, with quality degradation most users can't distinguish in everyday tasks. Common formats like GGUF Q4_K_M, GPTQ 4-bit, and AWQ 4-bit all map to this bucket.</p>
+      <p><strong>FP16 vs BF16:</strong> both are 16-bit but with different exponent/mantissa splits. BF16 has a wider range (better for training), FP16 has slightly more precision (marginally better for inference). In practice they're interchangeable for running models locally.</p>
+      <div class="callout">
+        <strong>Note on KV cache:</strong> even when model weights are INT4, the key-value cache is almost always kept in FP16. Quantizing the KV cache hurts quality more than it saves space.
+      </div>
+    </div>
+  </div>
+
+  <div class="concept" id="context">
+    <div class="concept-header">
+      <span class="concept-id">04</span>
+      <h2>Context window — how much the model can see</h2>
+    </div>
+    <div class="concept-body">
+      <p>The context window is the maximum number of tokens the model processes at once — your entire prompt, the conversation history, any documents you've fed in, and the tokens it has already generated. Everything outside the window is invisible to the model.</p>
+      <p>"128k context" means the model can hold roughly 100,000 words in view simultaneously. This sounds like a lot until you try to feed it an entire codebase or a long research paper.</p>
+      <p>Context length directly drives the KV cache size (see next concept). Doubling your context roughly doubles the memory needed for the cache — which is why the calculator shows dramatically different VRAM in Detailed mode as you change context length.</p>
+      <div class="example">
+        <div class="example-label">Rule of thumb</div>
+        8k context = ~6,000 words = a long article. Fine for most chats.<br>
+        32k = ~24,000 words = a short novel chapter or a medium codebase.<br>
+        128k = ~96,000 words = a full book. Very expensive in VRAM.
+      </div>
+    </div>
+  </div>
+
+  <div class="concept" id="kvcache">
+    <div class="concept-header">
+      <span class="concept-id">05</span>
+      <h2>KV cache — why long conversations eat memory</h2>
+    </div>
+    <div class="concept-body">
+      <p>During inference, every transformer layer computes <strong>Keys</strong> and <strong>Values</strong> for every token in the context. The KV cache stores these so they don't need to be recomputed each time a new token is generated. It's a speed optimization — without it, generating token N would require re-processing all N-1 previous tokens from scratch.</p>
+      <p>The cost: the cache grows proportionally with context length, number of layers, and model dimension. A 70B model at 128k context can need 20–60 GB just for the KV cache — sometimes more than the model weights themselves.</p>
+      <div class="formula">
+kv_cache_GB ≈ (2 × layers × d_model × context_tokens × batch × 2 bytes) / 1e9
+      </div>
+      <p>The "2" is K + V. The "2 bytes" is FP16 storage. <code>layers</code> and <code>d_model</code> vary by model architecture (Llama 70B: 80 layers, 8192 d_model).</p>
+      <p>This is why the calculator's <strong>Detailed mode</strong> gives higher VRAM estimates than Simple mode — and why the gap widens as you increase context length.</p>
+    </div>
+  </div>
+
+  <div class="concept" id="tokens">
+    <div class="concept-header">
+      <span class="concept-id">06</span>
+      <h2>Tokens — the atoms of language models</h2>
+    </div>
+    <div class="concept-body">
+      <p>Models don't process letters or words — they process <strong>tokens</strong>, which are chunks of text roughly corresponding to common syllables or word fragments. The tokenizer (a lookup table baked into the model) splits any text into these chunks before it enters the model.</p>
+      <table>
+        <tr><th>Text</th><th>Approx tokens</th><th>Notes</th></tr>
+        <tr><td>"Hello, world!"</td><td>4</td><td class="dim">Short sentence</td></tr>
+        <tr><td>A typical English word</td><td>~1.3</td><td class="dim">Common words = 1 token; rare = 2–3</td></tr>
+        <tr><td>1,000 words of prose</td><td>~750</td><td class="dim">Rule of thumb: tokens ≈ words × 0.75</td></tr>
+        <tr><td>A 200-line Python function</td><td>~400–600</td><td class="dim">Code is denser than prose</td></tr>
+        <tr><td>This entire HTML page</td><td>~8,000</td><td class="dim">Roughly</td></tr>
+      </table>
+      <p>Token count matters because it directly determines VRAM (via KV cache), latency (prefill time scales with prompt tokens), and cost when using API providers that charge per token.</p>
+    </div>
+  </div>
+
+  <!-- ===== ARCHITECTURE ===== -->
+  <hr>
+  <div class="section-title">▮ Architecture & performance</div>
+
+  <div class="concept" id="moe">
+    <div class="concept-header">
+      <span class="concept-id">07</span>
+      <h2>MoE — Mixture of Experts</h2>
+    </div>
+    <div class="concept-body">
+      <p>A standard "dense" model uses all its parameters for every token. A <strong>Mixture of Experts</strong> model has multiple parallel sub-networks (experts) but only activates a small subset for each token — a router decides which experts are relevant for each piece of text.</p>
+      <p>This creates a split between two parameter counts that mean very different things:</p>
+      <table>
+        <tr><th>Count</th><th>What it drives</th><th>Example: DeepSeek V3</th></tr>
+        <tr><td><strong>Total params</strong></td><td>VRAM — all experts must be loaded</td><td class="dim">685B total</td></tr>
+        <tr><td><strong>Active params</strong></td><td>Compute & decode speed — only active experts are read per token</td><td class="dim">37B active</td></tr>
+      </table>
+      <p>This is why DeepSeek V3 (685B total) can generate tokens nearly as fast as a 37B dense model, despite having 18× more parameters. <strong>All experts live in VRAM, but per-token compute is cheap.</strong></p>
+      <div class="example">
+        <div class="example-label">In the calculator</div>
+        MoE models show both numbers: "685B parameters · MoE: 37B active/token". VRAM uses total params; decode speed uses active params. Efficiency factor is ~0.2 (vs 0.7 for dense) due to routing overhead and scattered memory access.
+      </div>
+      <p class="learn-more">Models with MoE in the calculator: DeepSeek V3/R1, Mixtral 8x7B and 8x22B, Qwen 3.5 35B-A3B and 235B-A22B, Llama 4 Scout, Llama 4 Maverick.</p>
+    </div>
+  </div>
+
+  <div class="concept" id="prefill-decode">
+    <div class="concept-header">
+      <span class="concept-id">08</span>
+      <h2>Prefill vs Decode — two different bottlenecks</h2>
+    </div>
+    <div class="concept-body">
+      <p>Running a model has two distinct phases with completely different performance characteristics — which is why the calculator shows them separately.</p>
+
+      <div class="vs-grid">
+        <div class="vs-card">
+          <div class="vs-card-title" style="color: var(--accent);">Prefill (TTFT)</div>
+          <ul>
+            <li>Processes the entire prompt at once</li>
+            <li>Compute-bound (TFLOPS matter)</li>
+            <li>Scales with prompt length</li>
+            <li>GPU parallelism helps a lot</li>
+            <li>H100 >> RTX 4090 here</li>
+          </ul>
+        </div>
+        <div class="vs-card">
+          <div class="vs-card-title" style="color: var(--green);">Decode (tok/s)</div>
+          <ul>
+            <li>Generates one token at a time</li>
+            <li>Memory-bandwidth-bound (GB/s matters)</li>
+            <li>Roughly constant per token</li>
+            <li>More VRAM = bigger models, not faster</li>
+            <li>Apple M4 Ultra surprises here</li>
+          </ul>
+        </div>
+      </div>
+
+      <p>The intuition for decode: to generate each new token, the GPU must read every weight in the model once. On an H100 with 3.35 TB/s bandwidth, a 70B FP16 model takes: 140 GB ÷ 3,350 GB/s ≈ 42ms per token → ~24 tok/s. That's it — compute barely matters, bandwidth is the ceiling.</p>
+      <p>This is why Apple Silicon is surprisingly competitive at decode despite low TFLOPS: the M4 Ultra's unified memory architecture gives it 800+ GB/s of bandwidth with no PCIe bottleneck, and power efficiency that datacenter GPUs can't match.</p>
+
+      <div class="example">
+        <div class="example-label">Real calibration points</div>
+        H100 80GB · Llama 3 70B FP16 · 2048-token prompt: ~250ms prefill, ~30 tok/s decode<br>
+        Mac Studio M2 Ultra · Llama 70B Q4: ~12–18 tok/s decode<br>
+        Mac mini M4 · Qwen 3.5 35B-A3B Q4: ~35 tok/s decode
+      </div>
+    </div>
+  </div>
+
+  <div class="concept" id="inference-training">
+    <div class="concept-header">
+      <span class="concept-id">09</span>
+      <h2>Inference vs Training</h2>
+    </div>
+    <div class="concept-body">
+      <p><strong>Training</strong> is how a model is created: you show it trillions of tokens, compute gradients, and adjust all the weights to minimize prediction error. It requires storing not just the weights but also gradients and optimizer states — typically 4–16× the model's VRAM footprint. Training GPT-4 cost ~$100M in compute.</p>
+      <p><strong>Inference</strong> is running an already-trained model to generate text. You load the (fixed) weights and do a single forward pass per token. This is what this calculator covers — and it's far cheaper and more accessible than training.</p>
+      <p><strong>Fine-tuning</strong> sits in between: you take a pre-trained model and continue training it on a smaller, task-specific dataset. Techniques like LoRA (Low-Rank Adaptation) let you do this on consumer hardware by only training a tiny subset of parameters.</p>
+      <div class="callout">
+        <strong>This calculator is inference-only.</strong> If you want to fine-tune a model, multiply the VRAM estimate by ~4–6× as a rough lower bound for training memory.
+      </div>
+    </div>
+  </div>
+
+  <div class="concept" id="multiGPU">
+    <div class="concept-header">
+      <span class="concept-id">10</span>
+      <h2>Multi-GPU — stacking cards for bigger models</h2>
+    </div>
+    <div class="concept-body">
+      <p>When a model doesn't fit in one GPU's VRAM, you can split it across multiple cards using <strong>tensor parallelism</strong> — each GPU holds a slice of the weight matrices and they coordinate via high-speed interconnect. The calculator does this automatically for NVIDIA cards.</p>
+      <p>The catch: inter-GPU communication has overhead, and scaling is sublinear.</p>
+      <table>
+        <tr><th>GPUs</th><th>NVIDIA (NVLink)</th><th>Apple (Thunderbolt)</th></tr>
+        <tr><td>2×</td><td class="green">~1.8× speed</td><td class="accent">~1.4× speed</td></tr>
+        <tr><td>4×</td><td class="green">~3.1× speed</td><td class="accent">~2.1× speed</td></tr>
+        <tr><td>8×</td><td class="green">~5.7× speed</td><td class="red">~3.0× speed</td></tr>
+      </table>
+      <p>The Apple clustering gap is dramatic because <strong>Thunderbolt 4 tops out at ~40 Gbps</strong>, while NVLink between H100s runs at ~7,200 Gbps — 180× faster. Per-layer activations must cross this link, which becomes the bottleneck.</p>
+      <p><strong>DGX systems</strong> are pre-configured multi-GPU boxes: the DGX H100 packs 8 H100s with NVLink inside one server. They can't be further stacked in this calculator — you'd need a full datacenter fabric (InfiniBand) for that.</p>
+    </div>
+  </div>
+
+  <!-- ===== INTELLIGENCE ===== -->
+  <hr>
+  <div class="section-title">▮ Intelligence & evaluation</div>
+
+  <div class="concept" id="smart">
+    <div class="concept-header">
+      <span class="concept-id">11</span>
+      <h2>What actually makes a model "smarter"</h2>
+    </div>
+    <div class="concept-body">
+      <p>More parameters help — up to a point. But parameter count is one of the least predictive indicators of real-world usefulness. What actually drives quality:</p>
+      <table>
+        <tr><th>Factor</th><th>Why it matters</th></tr>
+        <tr><td><strong>Training data quality</strong></td><td class="dim">A model trained on curated, diverse, high-quality text will outperform one trained on raw internet dumps at 3× the parameter count. Garbage in, garbage out — at massive scale.</td></tr>
+        <tr><td><strong>RLHF / alignment training</strong></td><td class="dim">Reinforcement Learning from Human Feedback teaches the model to be helpful, honest, and safe — not just to predict the next token. This is why base models feel "raw" vs. instruction-tuned ones.</td></tr>
+        <tr><td><strong>Architecture innovations</strong></td><td class="dim">GQA (grouped-query attention), Flash Attention, MoE routing, extended RoPE for context — better architectures extract more from the same parameter budget.</td></tr>
+        <tr><td><strong>Scaling laws</strong></td><td class="dim">Chinchilla's law: optimal training uses ~20 tokens per parameter. Many early large models were undertrained. Llama 3 70B trained on 15T tokens (~215 tokens/param) is smarter than GPT-3 175B trained on 300B tokens.</td></tr>
+        <tr><td><strong>Post-training</strong></td><td class="dim">Instruction tuning, DPO, constitutional AI, tool use training — the "base model" is the raw material; post-training is where the useful assistant emerges.</td></tr>
+      </table>
+      <div class="callout">
+        <strong>Practical upshot:</strong> A well-trained 8B model (Llama 3.1 8B) handles most coding and reasoning tasks better than GPT-3 175B — a model with 20× more parameters released just 4 years earlier. Hardware required dropped from "a datacenter" to "a MacBook Pro".
+      </div>
+    </div>
+  </div>
+
+  <div class="concept" id="benchmarks">
+    <div class="concept-header">
+      <span class="concept-id">12</span>
+      <h2>Benchmarks — what they measure and what they miss</h2>
+    </div>
+    <div class="concept-body">
+      <p>Benchmarks are standardized tests used to compare models. They're useful for rough ranking but notoriously easy to game and often diverge from real-world usefulness.</p>
+      <table>
+        <tr><th>Benchmark</th><th>Tests</th><th>Caveats</th></tr>
+        <tr><td><strong>MMLU</strong></td><td class="dim">Multiple-choice questions across 57 academic subjects</td><td class="dim">Easy to overfit; doesn't test reasoning, just recall</td></tr>
+        <tr><td><strong>HumanEval</strong></td><td class="dim">Python function completion from docstrings</td><td class="dim">Short, isolated functions; doesn't test system design or debugging</td></tr>
+        <tr><td><strong>MATH / GSM8K</strong></td><td class="dim">Math word problems, grade-school through competition level</td><td class="dim">Models can memorize solutions; chain-of-thought prompting inflates scores</td></tr>
+        <tr><td><strong>MT-Bench</strong></td><td class="dim">Multi-turn conversations judged by GPT-4</td><td class="dim">GPT-4 as judge introduces biases toward similar writing styles</td></tr>
+        <tr><td><strong>LMSYS Chatbot Arena</strong></td><td class="dim">Blind A/B comparisons by real users</td><td class="dim">Best real-world proxy, but slow and skewed toward English and tech users</td></tr>
+      </table>
+      <p>A model can score highly on MMLU by memorizing common test formats during training — a practice called <strong>benchmark contamination</strong>. The most honest signal is Chatbot Arena, where users compare models blindly without knowing which is which.</p>
+      <p class="learn-more">
+        → <a href="https://lmarena.ai" target="_blank" rel="noopener noreferrer">LMSYS Chatbot Arena</a> (real-user blind comparisons) ·
+        <a href="https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard" target="_blank" rel="noopener noreferrer">Open LLM Leaderboard</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- ===== HARDWARE ===== -->
+  <hr>
+  <div class="section-title">▮ Hardware choices</div>
+
+  <div class="concept" id="workstation-vs-gaming">
+    <div class="concept-header">
+      <span class="concept-id">13</span>
+      <h2>Workstation vs Gaming GPU for AI inference</h2>
+    </div>
+    <div class="concept-body">
+      <p>Gaming cards (RTX 4090, RTX 5090) and workstation/datacenter cards (A100, H100, RTX 6000 Ada) share similar GPU dies but are engineered for different use cases. For AI inference, the differences matter more than the TFLOPS numbers suggest.</p>
+
+      <div class="vs-grid">
+        <div class="vs-card">
+          <div class="vs-card-title" style="color: var(--accent);">Workstation / Datacenter</div>
+          <ul>
+            <li>48–192 GB VRAM — fits huge models without quantization</li>
+            <li>ECC memory — bit-flip protection for long runs</li>
+            <li>NVLink — 600–7200 GB/s multi-GPU bandwidth</li>
+            <li>Sustained TDP — runs at full power indefinitely</li>
+            <li>Enterprise drivers, MIG support (H100)</li>
+            <li>PCIe × 16 — no slot fighting</li>
+          </ul>
+        </div>
+        <div class="vs-card">
+          <div class="vs-card-title" style="color: var(--blue);">Gaming (Consumer)</div>
+          <ul>
+            <li>16–32 GB VRAM — needs aggressive quantization for 70B+</li>
+            <li>No ECC — occasional silent errors in long runs</li>
+            <li>PCIe only (no NVLink on consumer cards)</li>
+            <li>Thermal throttling under sustained load</li>
+            <li>Consumer drivers, no MIG</li>
+            <li>Much lower purchase price</li>
+          </ul>
+        </div>
+      </div>
+
+      <p>Despite these limitations, <strong>consumer cards are often the right choice</strong> for models that fit in their VRAM:</p>
+      <ul style="list-style:none;padding:0;margin:10px 0;">
+        <li style="padding:3px 0;color:var(--muted)">→ RTX 4090 at $1,800 vs H100 at $27,000 — same decode tok/s for a 20B model</li>
+        <li style="padding:3px 0;color:var(--muted)">→ RTX 4090: 1,008 GB/s bandwidth. H100: 3,350 GB/s. H100 is 3× faster — but 15× more expensive</li>
+        <li style="padding:3px 0;color:var(--muted)">→ For a 13B INT4 model (6.5 GB), an RTX 4090 runs it at ~140 tok/s. You don't need an H100</li>
+      </ul>
+
+      <div class="callout">
+        <strong>The calculator's $/GB column tells this story:</strong> RTX 4090 = ~$75/GB. H100 = ~$338/GB. For models that fit in 24 GB, the gaming card wins on value. Once you need 80 GB+ without quantization, the economics flip.
+      </div>
+
+      <p><strong>Apple Silicon is a third option</strong> the calculator covers. The M4 Ultra's unified memory means no VRAM/RAM split — all 192 GB is usable by the GPU at 800 GB/s. No discrete GPU matches that bandwidth-per-watt. The tradeoff: no CUDA ecosystem, MLX/llama.cpp only, slower prefill due to lower TFLOPS.</p>
+
+      <p class="learn-more">
+        → <a href="https://github.com/ggerganov/llama.cpp" target="_blank" rel="noopener noreferrer">llama.cpp</a> (CPU/Apple/NVIDIA inference) ·
+        <a href="https://github.com/ml-explore/mlx" target="_blank" rel="noopener noreferrer">MLX</a> (Apple-native framework) ·
+        <a href="https://github.com/vllm-project/vllm" target="_blank" rel="noopener noreferrer">vLLM</a> (NVIDIA production serving) ·
+        <a href="https://www.youtube.com/watch?v=zjkBMFhNj_g" target="_blank" rel="noopener noreferrer">Karpathy: Intro to LLMs (YouTube)</a>
+      </p>
+    </div>
+  </div>
+
+  <hr>
+  <p style="color:var(--dim);font-size:11px;text-align:center;">
+    Selfsilicon · docs/EducAItion.html · 2026
+    · <a href="PROJECT.html" style="color:var(--dim)">Project overview</a>
+    · <a href="../index.html" style="color:var(--dim)">Calculator</a>
+  </p>
+
+</div>
+
+<script>
+// Smooth scroll for nav links
+document.querySelectorAll('.toc a').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+  });
+});
+</script>
+</body>
+</html>

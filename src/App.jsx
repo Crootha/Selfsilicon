@@ -1041,7 +1041,7 @@ export default function App() {
               ▮▮▮ GPU / VRAM / COST_CALCULATOR
             </div>
             <div className="flex items-center gap-4">
-              <a href="/docs/educAItion.html" target="_blank" rel="noopener noreferrer" className="text-xs font-mono text-neutral-500 hover:text-amber-500 transition-colors tracking-wider uppercase">educAItion ↗</a>
+              <a href="/docs/EducAItion.html" target="_blank" rel="noopener noreferrer" className="px-3 py-1 text-xs font-mono uppercase border border-neutral-700 text-neutral-400 hover:border-amber-500 hover:text-amber-500 transition-colors">EducAItion ↗</a>
               <div className="text-xs font-mono text-neutral-600">v1.0 · {new Date().toISOString().slice(0,10)}</div>
             </div>
           </div>
@@ -1489,7 +1489,7 @@ export default function App() {
           <div><span className="text-amber-500">★</span> TCO = HW price + power × 24h × 30d × 50% utilization × months × $/kWh.</div>
           <div><span className="text-amber-500">★</span> GPU prices change over time - table is approximate as of 2025.</div>
           <div className="pt-3 mt-2 border-t border-neutral-800/50">
-            New to AI terminology? <a href="/docs/educAItion.html" target="_blank" rel="noopener noreferrer" className="text-amber-500/70 hover:text-amber-500 underline decoration-dotted">educAItion — plain-English guide to VRAM, quantization, MoE, and more ↗</a>
+            New to AI terminology? <a href="/docs/EducAItion.html" target="_blank" rel="noopener noreferrer" className="text-amber-500/70 hover:text-amber-500 underline decoration-dotted">EducAItion — plain-English guide to VRAM, quantization, MoE, and more ↗</a>
           </div>
         </div>
       </div>
