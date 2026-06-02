@@ -159,7 +159,8 @@ function calcVRAM(params, quantId, context, mode, batchSize = 1) {
   // rough estimate: n_layers ~ scaling, using heuristic
   const nLayers = Math.max(32, Math.round(Math.pow(params, 0.5) * 8));
   const dModel = Math.max(2048, Math.round(Math.pow(params, 0.5) * 600));
-  // KV cache usually FP16 even with INT4 weights
+  // KV cache assumed FP16 (conservative upper bound).
+  // llama.cpp --cache-type-k q8_0 / q4_0 can halve this; vLLM also supports KV quantization.
   const kvBytes = 2;
   const kvCache = (2 * nLayers * dModel * context * batchSize * kvBytes) / 1e9;
   const overhead = weights * 0.1 + 1; // activations + framework
@@ -946,26 +947,45 @@ function ComparePanel({ items, totalVRAM, runtimeMonths, electricityRate, prompt
   );
 }
 
+const LS_KEY = 'selfsilicon-v1';
+function loadSaved() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; }
+}
+
 export default function App() {
-  const [models, setModels] = useState([
-    { id: 1, name: '', params: 0, quant: 'fp16', context: 8192, source: null, activeParams: null },
-  ]);
-  const [calcMode, setCalcMode] = useState('detailed'); // simple | detailed
-  const [concurrent, setConcurrent] = useState(true);
-  const [vendorFilter, setVendorFilter] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [runtimeMonths, setRuntimeMonths] = useState(12);
-  const [electricityRate, setElectricityRate] = useState(0.15); // USD/kWh
-  const [sortBy, setSortBy] = useState('price');
-  const [promptTokens, setPromptTokens] = useState(1024);
-  const [outputTokens, setOutputTokens] = useState(256);
-  const [appleCluster, setAppleCluster] = useState(false); // allow stacking Apple machines via EXO/llama.cpp RPC
-  const [maxPrice, setMaxPrice] = useState(10000);
-  const [maxPriceEnabled, setMaxPriceEnabled] = useState(true);
+  const saved = loadSaved();
+  const [models, setModels] = useState(
+    saved.models?.length ? saved.models : [{ id: 1, name: '', params: 0, quant: 'fp16', context: 8192, source: null, activeParams: null }]
+  );
+  const [calcMode, setCalcMode] = useState(saved.calcMode ?? 'detailed');
+  const [concurrent, setConcurrent] = useState(saved.concurrent ?? true);
+  const [vendorFilter, setVendorFilter] = useState(saved.vendorFilter ?? 'all');
+  const [categoryFilter, setCategoryFilter] = useState(saved.categoryFilter ?? 'all');
+  const [runtimeMonths, setRuntimeMonths] = useState(saved.runtimeMonths ?? 12);
+  const [electricityRate, setElectricityRate] = useState(saved.electricityRate ?? 0.15);
+  const [sortBy, setSortBy] = useState(saved.sortBy ?? 'price');
+  const [promptTokens, setPromptTokens] = useState(saved.promptTokens ?? 1024);
+  const [outputTokens, setOutputTokens] = useState(saved.outputTokens ?? 256);
+  const [appleCluster, setAppleCluster] = useState(saved.appleCluster ?? false);
+  const [maxPrice, setMaxPrice] = useState(saved.maxPrice ?? 10000);
+  const [maxPriceEnabled, setMaxPriceEnabled] = useState(saved.maxPriceEnabled ?? true);
   const [hwSearch, setHwSearch] = useState('');
   const [compareMode, setCompareMode] = useState(false);
   const [compareSelected, setCompareSelected] = useState(new Set());
-  const [hwMode, setHwMode] = useState('inference'); // 'inference' | 'agent'
+  const [hwMode, setHwMode] = useState(saved.hwMode ?? 'inference');
+
+  // Persist state to localStorage on every meaningful change (not transient UI like search/compare)
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify({
+        models, calcMode, concurrent, vendorFilter, categoryFilter,
+        runtimeMonths, electricityRate, sortBy, promptTokens, outputTokens,
+        appleCluster, maxPrice, maxPriceEnabled, hwMode,
+      }));
+    } catch {}
+  }, [models, calcMode, concurrent, vendorFilter, categoryFilter,
+      runtimeMonths, electricityRate, sortBy, promptTokens, outputTokens,
+      appleCluster, maxPrice, maxPriceEnabled, hwMode]);
 
   const addModel = () => {
     setModels([...models, { id: Date.now(), name: '', params: 0, quant: 'fp16', context: 8192, source: null, activeParams: null }]);
@@ -1201,7 +1221,7 @@ export default function App() {
             <div className="text-xs text-neutral-500 mt-2 leading-relaxed">
               {calcMode === 'simple' 
                 ? 'Params × bytes/param + 20% overhead. Ignores KV cache and context.'
-                : 'Weights + KV cache (depends on context) + framework overhead. KV cache always in FP16 even for quantized models.'}
+                : 'Weights + KV cache (depends on context) + framework overhead. KV cache assumed FP16 — the default in most tools. llama.cpp/vLLM support KV quantization (Q8/Q4) which can halve this; calc uses FP16 as a conservative upper bound.'}
             </div>
           </div>
 

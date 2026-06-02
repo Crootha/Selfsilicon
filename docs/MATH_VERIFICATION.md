@@ -55,7 +55,9 @@ overhead_GB = weights × 0.1 + 1
 total_GB    = weights + kv_cache + overhead
 ```
 
-KV stays in FP16 (2 bytes/param) regardless of weight quantization.
+KV stays in FP16 (2 bytes/param) — this is the **conservative upper bound** assumed by the calculator.
+
+**KV cache can be quantized in practice:** llama.cpp supports `--cache-type-k q8_0` and `--cache-type-v q8_0` (Q8, halves KV VRAM) or `q4_0` (Q4, quarters it). vLLM and SGLang also support KV quantization. The trade-off is a small accuracy loss on long contexts. To get the real KV VRAM for a quantized-KV run, multiply the KV cache figure by 0.5 (Q8) or 0.25 (Q4).
 
 **Worked example — Llama 3 70B Q4, 8k context, batch=1:**
 ```
