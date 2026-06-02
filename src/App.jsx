@@ -29,6 +29,13 @@ const HARDWARE = [
   { id: 'rtx5070ti', vendor: 'NVIDIA', name: 'RTX 5070 Ti 16GB', vram: 16, price: 750, tflops_fp16: 88, bandwidth_gbs: 896, power: 300, category: 'gaming' },
   { id: 'rtx5080', vendor: 'NVIDIA', name: 'RTX 5080 16GB', vram: 16, price: 1200, tflops_fp16: 113, bandwidth_gbs: 960, power: 360, category: 'gaming' },
   { id: 'rtx5090', vendor: 'NVIDIA', name: 'RTX 5090 32GB', vram: 32, price: 2400, tflops_fp16: 209, bandwidth_gbs: 1792, power: 575, category: 'gaming' },
+  // AMD RDNA3 Gaming — RX 7000 series (tflops_fp16 = peak FP32 w/ dual-issue; ROCm/llama.cpp perf is bandwidth-bound for decode)
+  { id: 'rx7600', vendor: 'AMD', name: 'RX 7600 8GB', vram: 8, price: 250, tflops_fp16: 22, bandwidth_gbs: 288, power: 165, category: 'gaming' },
+  { id: 'rx7700xt', vendor: 'AMD', name: 'RX 7700 XT 12GB', vram: 12, price: 380, tflops_fp16: 34, bandwidth_gbs: 432, power: 245, category: 'gaming' },
+  { id: 'rx7800xt', vendor: 'AMD', name: 'RX 7800 XT 16GB', vram: 16, price: 480, tflops_fp16: 37, bandwidth_gbs: 624, power: 263, category: 'gaming' },
+  { id: 'rx7900gre', vendor: 'AMD', name: 'RX 7900 GRE 16GB', vram: 16, price: 450, tflops_fp16: 46, bandwidth_gbs: 576, power: 260, category: 'gaming' },
+  { id: 'rx7900xt', vendor: 'AMD', name: 'RX 7900 XT 20GB', vram: 20, price: 700, tflops_fp16: 52, bandwidth_gbs: 800, power: 315, category: 'gaming' },
+  { id: 'rx7900xtx', vendor: 'AMD', name: 'RX 7900 XTX 24GB', vram: 24, price: 900, tflops_fp16: 61, bandwidth_gbs: 960, power: 355, category: 'gaming' },
   // NVIDIA Workstation — Ampere
   { id: 'rtxa2000_12', vendor: 'NVIDIA', name: 'RTX A2000 12GB', vram: 12, price: 500, tflops_fp16: 16, bandwidth_gbs: 192, power: 70, category: 'workstation' },
   { id: 'rtxa4000', vendor: 'NVIDIA', name: 'RTX A4000 16GB', vram: 16, price: 900, tflops_fp16: 38, bandwidth_gbs: 448, power: 140, category: 'workstation' },
@@ -40,12 +47,20 @@ const HARDWARE = [
   { id: 'rtx4500ada', vendor: 'NVIDIA', name: 'RTX 4500 Ada 24GB', vram: 24, price: 2000, tflops_fp16: 50, bandwidth_gbs: 432, power: 210, category: 'workstation' },
   { id: 'rtx5000ada', vendor: 'NVIDIA', name: 'RTX 5000 Ada 32GB', vram: 32, price: 4500, tflops_fp16: 130, bandwidth_gbs: 576, power: 250, category: 'workstation' },
   { id: 'a6000ada', vendor: 'NVIDIA', name: 'RTX 6000 Ada 48GB', vram: 48, price: 6800, tflops_fp16: 182, bandwidth_gbs: 960, power: 300, category: 'workstation' },
+  // AMD Radeon PRO W — RDNA3 workstation
+  { id: 'prow7600', vendor: 'AMD', name: 'Radeon PRO W7600 16GB', vram: 16, price: 600, tflops_fp16: 24, bandwidth_gbs: 288, power: 130, category: 'workstation' },
+  { id: 'prow7800', vendor: 'AMD', name: 'Radeon PRO W7800 32GB', vram: 32, price: 2400, tflops_fp16: 45, bandwidth_gbs: 576, power: 260, category: 'workstation' },
+  { id: 'prow7900', vendor: 'AMD', name: 'Radeon PRO W7900 48GB', vram: 48, price: 3800, tflops_fp16: 61, bandwidth_gbs: 864, power: 295, category: 'workstation' },
   // NVIDIA Datacenter
   { id: 'a100_40', vendor: 'NVIDIA', name: 'A100 40GB', vram: 40, price: 8500, tflops_fp16: 312, bandwidth_gbs: 1555, power: 400, category: 'datacenter' },
   { id: 'a100_80', vendor: 'NVIDIA', name: 'A100 80GB', vram: 80, price: 15000, tflops_fp16: 312, bandwidth_gbs: 2039, power: 400, category: 'datacenter' },
   { id: 'h100', vendor: 'NVIDIA', name: 'H100 80GB', vram: 80, price: 27000, tflops_fp16: 989, bandwidth_gbs: 3350, power: 700, category: 'datacenter' },
   { id: 'h200', vendor: 'NVIDIA', name: 'H200 141GB', vram: 141, price: 32000, tflops_fp16: 989, bandwidth_gbs: 4800, power: 700, category: 'datacenter' },
   { id: 'b200', vendor: 'NVIDIA', name: 'B200 192GB', vram: 192, price: 45000, tflops_fp16: 2250, bandwidth_gbs: 8000, power: 1000, category: 'datacenter' },
+  // AMD Instinct — datacenter
+  { id: 'mi210', vendor: 'AMD', name: 'Instinct MI210 64GB', vram: 64, price: 6000, tflops_fp16: 181, bandwidth_gbs: 1638, power: 300, category: 'datacenter' },
+  { id: 'mi250x', vendor: 'AMD', name: 'Instinct MI250X 128GB', vram: 128, price: 12000, tflops_fp16: 383, bandwidth_gbs: 3277, power: 560, category: 'datacenter' },
+  { id: 'mi300x', vendor: 'AMD', name: 'Instinct MI300X 192GB', vram: 192, price: 15000, tflops_fp16: 1307, bandwidth_gbs: 5300, power: 750, category: 'datacenter' },
   // NVIDIA DGX Systems (turnkey boxes, prices include node)
   { id: 'dgx_spark', vendor: 'NVIDIA', name: 'DGX Spark', vram: 128, price: 4000, tflops_fp16: 250, bandwidth_gbs: 273, power: 240, category: 'dgx', units: 1, note: '1× GB10, unified memory' },
   { id: 'dgx_station', vendor: 'NVIDIA', name: 'DGX Station', vram: 784, price: 75000, tflops_fp16: 4500, bandwidth_gbs: 8000, power: 1500, category: 'dgx', units: 1, note: '1× GB300 Ultra, desktop' },
@@ -645,6 +660,9 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
   const totalCost = totalPrice + electricityCost;
   const links = getRetailerLinks(hw);
   const isAppleCluster = hw.vendor === 'Apple' && needed > 1;
+  const doesntFitTitle = needed > 1
+    ? `${needed}× stacked → ~${effectiveVRAM.toFixed(0)} GB effective (overhead) — still ${(totalVRAM - effectiveVRAM).toFixed(0)} GB short`
+    : `${hw.vram} GB VRAM, needs ${totalVRAM.toFixed(0)} GB`;
 
   return (
     <div className={reallyFits ? '' : 'opacity-40'}>
@@ -653,7 +671,7 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
       <div className="lg:hidden border-b border-neutral-800 px-4 py-3">
         <div className="flex items-start justify-between mb-1.5">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            {!reallyFits && <AlertTriangle size={12} className="text-red-400 flex-shrink-0" />}
+            {!reallyFits && <AlertTriangle size={12} className="text-red-400 flex-shrink-0" title={doesntFitTitle} />}
             {needed > 1 && (
               <span className="inline-flex items-center justify-center bg-amber-500 text-neutral-950 font-mono text-xs px-1.5 py-0.5 font-bold flex-shrink-0">
                 {needed}×
@@ -662,7 +680,7 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
             <span className="font-serif text-neutral-100 truncate">{hw.name}</span>
             <button
               onClick={e => { e.stopPropagation(); if (isSelected || canSelect) onToggleSelect(); }}
-              title={isSelected ? 'Remove from compare' : canSelect ? 'Add to compare' : 'Max 4 items'}
+              title={isSelected ? 'Remove from compare' : canSelect ? 'Add to compare' : 'Max 10 items'}
               className={`flex-shrink-0 w-5 h-5 flex items-center justify-center border transition-colors ${isSelected ? 'bg-amber-500 border-amber-500 text-neutral-950' : canSelect ? 'border-neutral-700 text-neutral-600 hover:border-amber-500 hover:text-amber-500' : 'border-neutral-800 text-neutral-800 cursor-not-allowed'}`}
             >
               {isSelected ? <Check size={10} /> : <Plus size={10} />}
@@ -749,7 +767,7 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
       {/* Desktop table row (≥ lg) */}
       <div className="hidden lg:grid grid-cols-12 gap-2 px-3 py-2.5 border-b border-neutral-800 text-sm items-center">
         <div className="col-span-2 flex items-center gap-2">
-          {!reallyFits && <AlertTriangle size={12} className="text-red-400" />}
+          {!reallyFits && <AlertTriangle size={12} className="text-red-400" title={doesntFitTitle} />}
           <div className="min-w-0 flex-1">
             <div className="font-serif text-neutral-100 flex items-center gap-2">
               {needed > 1 && (
@@ -767,7 +785,7 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
           </div>
           <button
             onClick={e => { e.stopPropagation(); if (isSelected || canSelect) onToggleSelect(); }}
-            title={isSelected ? 'Remove from compare' : canSelect ? 'Add to compare' : 'Max 4 items'}
+            title={isSelected ? 'Remove from compare' : canSelect ? 'Add to compare' : 'Max 10 items'}
             className={`flex-shrink-0 w-5 h-5 flex items-center justify-center border transition-colors ${isSelected ? 'bg-amber-500 border-amber-500 text-neutral-950' : canSelect ? 'border-neutral-700 text-neutral-600 hover:border-amber-500 hover:text-amber-500' : 'border-neutral-800 text-neutral-800 cursor-not-allowed'}`}
           >
             {isSelected ? <Check size={10} /> : <Plus size={10} />}
@@ -849,7 +867,7 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
   );
 }
 
-function ComparePanel({ items, totalVRAM, runtimeMonths, electricityRate, promptTokens, outputTokens, primaryModel, appleCluster, onClose }) {
+function CompareTable({ items, totalVRAM, runtimeMonths, electricityRate, promptTokens, outputTokens, primaryModel, appleCluster, onClose, onRemove }) {
   const stats = items.map(hw => {
     const canStack = (hw.vendor === 'NVIDIA' && hw.category !== 'dgx') || (hw.vendor === 'Apple' && appleCluster);
     const needed = canStack && totalVRAM > 0 ? Math.ceil(totalVRAM / hw.vram) : 1;
@@ -868,80 +886,93 @@ function ComparePanel({ items, totalVRAM, runtimeMonths, electricityRate, prompt
     return { hw, needed, reallyFits, totalPrice, totalPower, costPerGB, electricityCost, totalCost, latency };
   });
 
-  const rows = [
-    { label: 'VRAM',         get: s => s.hw.vram * s.needed,          fmt: v => `${v} GB`,                     best: 'max' },
-    { label: 'Fits model',   get: s => s.reallyFits ? 1 : 0,          fmt: (v,s) => s.reallyFits ? '✓ fits' : '✗ too small', best: 'max', isFit: true },
-    { label: 'Price',        get: s => s.totalPrice,                   fmt: v => fmtMoney(v),                   best: 'min' },
-    { label: '$ / GB',       get: s => s.costPerGB,                    fmt: v => `$${v.toFixed(0)}`,            best: 'min' },
-    { label: 'Mem bandwidth',get: s => s.hw.bandwidth_gbs,             fmt: v => `${fmt(v,0)} GB/s`,            best: 'max' },
-    { label: 'Prefill (TTFT)',get: s => s.latency ? s.latency.prefillMs : null, fmt: v => v != null ? fmtMs(v) : '–', best: 'min' },
-    { label: 'Decode',       get: s => s.latency ? s.latency.tokensPerSec : null, fmt: v => v != null ? `~${fmt(v,0)} tok/s` : '–', best: 'max' },
-    { label: 'Power',        get: s => s.totalPower,                   fmt: v => `${v} W`,                      best: 'min' },
-    { label: 'TCO',          get: s => s.totalCost,                    fmt: v => fmtMoney(v),                   best: 'min' },
+  const cols = [
+    { key: 'vram',    label: 'VRAM',    get: s => s.hw.vram * s.needed,            fmt: v => `${v} GB`,                      best: 'max' },
+    { key: 'fits',    label: 'Fits',    get: s => s.reallyFits ? 1 : 0,            fmt: (_v, s) => s.reallyFits ? '✓' : '✗', best: null  },
+    { key: 'price',   label: 'Price',   get: s => s.totalPrice,                     fmt: v => fmtMoney(v),                    best: 'min' },
+    { key: 'cpgb',    label: '$/GB',    get: s => s.costPerGB,                      fmt: v => `$${v.toFixed(0)}`,             best: 'min' },
+    { key: 'bw',      label: 'Mem BW',  get: s => s.hw.bandwidth_gbs,               fmt: v => `${fmt(v, 0)} GB/s`,           best: 'max' },
+    { key: 'prefill', label: 'Prefill', get: s => s.latency?.prefillMs ?? null,     fmt: v => v != null ? fmtMs(v) : '–',    best: 'min' },
+    { key: 'decode',  label: 'Decode',  get: s => s.latency?.tokensPerSec ?? null,  fmt: v => v != null ? `~${fmt(v, 0)} tok/s` : '–', best: 'max' },
+    { key: 'power',   label: 'Power',   get: s => s.totalPower,                     fmt: v => `${v} W`,                      best: 'min' },
+    { key: 'tco',     label: 'TCO',     get: s => s.totalCost,                      fmt: v => fmtMoney(v),                   best: 'min' },
   ];
+
+  const bestPerCol = {};
+  cols.forEach(col => {
+    if (!col.best) return;
+    const vals = stats.map(s => col.get(s)).filter(v => v !== null && !isNaN(v));
+    if (vals.length < 2) return;
+    if (vals.every(v => v === vals[0])) return;
+    bestPerCol[col.key] = col.best === 'max' ? Math.max(...vals) : Math.min(...vals);
+  });
 
   return (
     <div className="mb-6 border border-amber-500/25 bg-neutral-950">
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-amber-500/20 bg-neutral-900/60">
         <span className="text-xs font-mono uppercase tracking-widest text-amber-500">
-          ▮ comparing {items.length} item{items.length > 1 ? 's' : ''}
+          ▮ comparing {items.length} item{items.length !== 1 ? 's' : ''}
         </span>
         <button onClick={onClose} className="flex items-center gap-1.5 text-xs font-mono text-neutral-500 hover:text-neutral-200 transition-colors">
-          <X size={12} /> exit
+          <X size={12} /> exit compare
         </button>
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-xs font-mono border-collapse" style={{ minWidth: `${180 + items.length * 160}px` }}>
+        <table className="w-full text-xs font-mono border-collapse">
           <thead>
             <tr className="border-b border-neutral-800">
-              <th className="text-left px-4 py-3 text-neutral-600 font-normal w-36 text-[10px] uppercase tracking-wider">metric</th>
-              {stats.map(s => (
-                <th key={s.hw.id} className="px-4 py-3 text-left border-l border-neutral-800">
-                  <div className="text-neutral-100 font-medium">{s.hw.name}</div>
-                  <div className="text-neutral-500 font-normal text-[10px] uppercase mt-0.5">{s.hw.vendor} · {s.hw.category}</div>
-                  {s.needed > 1 && <div className="text-amber-500/70 text-[10px] mt-0.5">{s.needed}× stacked</div>}
+              <th className="px-2 py-3 w-8" />
+              <th className="px-4 py-3 text-left text-[10px] uppercase tracking-wider text-neutral-500 font-normal">GPU</th>
+              {cols.map(col => (
+                <th key={col.key} className="px-3 py-3 text-left text-[10px] uppercase tracking-wider text-neutral-500 font-normal whitespace-nowrap">
+                  {col.label}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {rows.map(row => {
-              const vals = stats.map(s => row.get(s));
-              const numeric = vals.filter(v => v !== null && !isNaN(v));
-              const allSame = numeric.length > 1 && numeric.every(v => v === numeric[0]);
-              const bestVal = numeric.length > 0
-                ? (row.best === 'max' ? Math.max(...numeric) : Math.min(...numeric))
-                : null;
-              return (
-                <tr key={row.label} className="border-b border-neutral-800/50 hover:bg-neutral-900/40 transition-colors">
-                  <td className="px-4 py-2.5 text-neutral-500 text-[10px] uppercase tracking-wider">{row.label}</td>
-                  {stats.map((s, i) => {
-                    const v = vals[i];
-                    const isBest = !allSame && bestVal !== null && v !== null && v === bestVal;
-                    return (
-                      <td key={s.hw.id} className={`px-4 py-2.5 border-l border-neutral-800 ${
-                        row.isFit
-                          ? s.reallyFits ? 'text-emerald-400' : 'text-red-400'
-                          : isBest ? 'text-amber-400' : 'text-neutral-300'
-                      }`}>
-                        {row.fmt(v, s)}
-                        {isBest && !row.isFit && <span className="text-amber-500/50 ml-1 text-[9px]">★</span>}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
+            {stats.map(s => (
+              <tr key={s.hw.id} className="border-b border-neutral-800/50 hover:bg-neutral-900/40 transition-colors">
+                <td className="px-2 py-2.5 text-center">
+                  <button
+                    onClick={() => onRemove(s.hw.id)}
+                    title="Remove from compare"
+                    className="w-5 h-5 flex items-center justify-center border border-neutral-700 text-neutral-600 hover:border-red-400 hover:text-red-400 transition-colors"
+                  >
+                    <X size={10} />
+                  </button>
+                </td>
+                <td className="px-4 py-2.5">
+                  <div className="text-neutral-100">{s.hw.name}</div>
+                  <div className="text-[10px] text-neutral-500 uppercase tracking-wider mt-0.5">
+                    {s.hw.vendor} · {s.hw.category}
+                    {s.needed > 1 && <span className="text-amber-500/70 ml-1">· {s.needed}× stacked</span>}
+                  </div>
+                </td>
+                {cols.map(col => {
+                  const v = col.get(s);
+                  const isBest = bestPerCol[col.key] !== undefined && v === bestPerCol[col.key];
+                  const isFits = col.key === 'fits';
+                  return (
+                    <td key={col.key} className={`px-3 py-2.5 whitespace-nowrap ${
+                      isFits
+                        ? s.reallyFits ? 'text-emerald-400' : 'text-red-400'
+                        : isBest ? 'text-amber-400' : 'text-neutral-300'
+                    }`}>
+                      {col.fmt(v, s)}
+                      {isBest && !isFits && <span className="text-amber-500/50 ml-1 text-[9px]">★</span>}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
-      {/* Footer hint */}
       <div className="px-4 py-2 border-t border-neutral-800 text-[10px] text-neutral-600">
-        ★ best value in each row · select up to 4 items
+        ★ best value in each column · click × to remove an item
       </div>
     </div>
   );
@@ -1443,7 +1474,7 @@ export default function App() {
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-2">
           <div className="flex flex-wrap items-center gap-1">
             <span className="text-xs text-neutral-500 font-mono uppercase mr-1 flex-shrink-0">vendor:</span>
-            {['all', 'NVIDIA', 'Apple'].map(v => (
+            {['all', 'NVIDIA', 'AMD', 'Apple'].map(v => (
               <button
                 key={v}
                 onClick={() => setVendorFilter(v)}
@@ -1527,7 +1558,7 @@ export default function App() {
 
         {/* Compare panel — appears when ≥2 items checked */}
         {compareMode && compareItems.length >= 2 && (
-          <ComparePanel
+          <CompareTable
             items={compareItems}
             totalVRAM={totalVRAM}
             runtimeMonths={runtimeMonths}
@@ -1537,6 +1568,14 @@ export default function App() {
             primaryModel={primaryModel}
             appleCluster={appleCluster}
             onClose={() => { setCompareMode(false); setCompareSelected(new Set()); }}
+            onRemove={(id) => {
+              setCompareSelected(prev => {
+                const n = new Set(prev);
+                n.delete(id);
+                if (n.size < 2) setCompareMode(false);
+                return n;
+              });
+            }}
           />
         )}
 
@@ -1626,12 +1665,12 @@ export default function App() {
                 hwMode={hwMode}
                 compareMode={compareMode}
                 isSelected={compareSelected.has(hw.id)}
-                canSelect={compareSelected.size < 4}
+                canSelect={compareSelected.size < 10}
                 onToggleSelect={() => setCompareSelected(prev => {
                   const next = new Set(prev);
                   if (next.has(hw.id)) {
                     next.delete(hw.id);
-                  } else if (next.size < 4) {
+                  } else if (next.size < 10) {
                     next.add(hw.id);
                   }
                   return next;
