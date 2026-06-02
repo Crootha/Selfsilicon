@@ -146,6 +146,7 @@
     <a href="#quant">Quantization</a>
     <a href="#context">Context window</a>
     <a href="#kvcache">KV cache</a>
+    <a href="#kv-quant">Q4_K vs Q4_V</a>
     <a href="#tokens">Tokens</a>
     <a href="#moe">MoE</a>
     <a href="#prefill-decode">Prefill vs Decode</a>
@@ -250,6 +251,19 @@ kv_cache_GB ≈ (2 × layers × d_model × context_tokens × batch × 2 bytes) /
       </div>
       <p>The "2" is K + V. The "2 bytes" is FP16 storage. <code>layers</code> and <code>d_model</code> vary by model architecture (Llama 70B: 80 layers, 8192 d_model).</p>
       <p>This is why the calculator's <strong>Detailed mode</strong> gives higher VRAM estimates than Simple mode — and why the gap widens as you increase context length.</p>
+
+      <p id="kv-quant" style="scroll-margin-top:24px"><strong>Reducing KV cache with quantization</strong> — you don't have to keep the KV cache in FP16. llama.cpp lets you quantize K and V independently:</p>
+      <div class="formula">llama-server --cache-type-k q8_0 --cache-type-v q4_0</div>
+      <table>
+        <tr><th>Cache</th><th>Role</th><th>Distribution</th><th>How low can you go</th></tr>
+        <tr><td><strong>K (Key)</strong></td><td class="dim">Computes attention scores — <em>which</em> tokens to attend to</td><td class="red">Spiky, with large outliers</td><td class="accent">Q8_0 minimum (Q4 causes notable degradation)</td></tr>
+        <tr><td><strong>V (Value)</strong></td><td class="dim">Weighted blend of content — <em>what</em> to retrieve</td><td class="green">Smooth, easy to quantize</td><td class="green">Q4_0 safe; Q8_0 conservative</td></tr>
+      </table>
+      <p>K vectors have a spiky distribution with outlier values that resist low-bit compression — quantizing K to Q4 causes visible degradation in long conversations. V vectors distribute more smoothly and tolerate Q4 without much quality loss.</p>
+      <div class="callout">
+        <strong>Practical recipe: <code>--cache-type-k q8_0 --cache-type-v q4_0</code></strong><br>
+        Mixed K/V quantization cuts KV cache memory by ~57% (FP16: 2 bytes → K at Q8: 1 byte, V at Q4: 0.5 bytes). On a 70B model at 128k context, that's ~42 GB → ~18 GB — enough to run a larger context window or fit on a smaller card.
+      </div>
     </div>
   </div>
 

@@ -85,6 +85,7 @@ src/App.jsx
 ## Review & design conventions
 
 - **All feature reviews and design proposals must be shown as interactive HTML files** — never as markdown text descriptions alone. Write to `tmp/mockup-<feature>.html`. Match the app's dark theme (IBM Plex Mono, Fraunces, amber-500 accent, neutral-950 bg). Make them clickable — filters, toggles, mode switches must actually work so the user can test the interaction, not just read about it.
+- **Visual companion: skip the server** — for visual brainstorming, just write the HTML file to `tmp/mockup-<feature>.html` directly. No need to start a local server.
 - Spec documents live at `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` after HTML approval.
 
 ## Conventions
