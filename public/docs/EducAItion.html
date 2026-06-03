@@ -157,7 +157,7 @@
     <a href="#smart">What makes a model smart</a>
     <a href="#benchmarks">Benchmarks</a>
     <a href="#workstation-vs-gaming">Workstation vs Gaming GPU</a>
-    <a href="#runtimes">llama.cpp vs vLLM</a>
+    <a href="#runtimes">Runtimes & tools</a>
   </nav>
 
   <!-- ===== FUNDAMENTALS ===== -->
@@ -561,46 +561,48 @@ llama-server --cache-type-k turbo3 --cache-type-v turbo3
   <div class="concept" id="runtimes">
     <div class="concept-header">
       <span class="concept-id">14</span>
-      <h2>llama.cpp vs vLLM — which runtime and why</h2>
+      <h2>Runtimes &amp; tools — the ecosystem around models</h2>
     </div>
     <div class="concept-body">
-      <p>Once you have a model, you need a <strong>runtime</strong> — a program that actually runs it. Think of it like a video player: the model is the movie file, the runtime is VLC. The two most common choices for local or small-team use are llama.cpp and vLLM, and they're built for very different situations.</p>
+      <p>A model file on its own does nothing. You need software around it to actually run it, serve it, and connect it to apps. Here are the four tools you'll encounter most often and what each one actually does.</p>
 
-      <div class="vs-grid">
-        <div class="vs-card">
-          <div class="vs-card-title" style="color:var(--accent);">llama.cpp</div>
-          <ul>
-            <li>Runs on CPU, GPU, Apple Silicon, or mixed</li>
-            <li>Uses <strong>.gguf</strong> model format (quantized-friendly)</li>
-            <li>Works on consumer hardware — 8 GB VRAM cards, laptops</li>
-            <li>Supports aggressive quantization (Q4, Q3, TurboQuant)</li>
-            <li>Lighter, easier to set up, wide model support</li>
-            <li>Good for: one GPU at home, tinkering, local assistants</li>
-          </ul>
-        </div>
-        <div class="vs-card">
-          <div class="vs-card-title" style="color:var(--blue);">vLLM</div>
-          <ul>
-            <li>NVIDIA GPU only (CUDA)</li>
-            <li>Uses <strong>HuggingFace / safetensors</strong> format</li>
-            <li>Designed for serving many users simultaneously</li>
-            <li>Needs more VRAM, prefers FP16 / FP8 models</li>
-            <li>Better throughput at scale; complex setup</li>
-            <li>Good for: production API, multi-user server</li>
-          </ul>
-        </div>
-      </div>
-
-      <p><strong>Why this matters for quantization:</strong> llama.cpp was built around quantized .gguf models from day one — Q4, Q3, TurboQuant, mixed-precision (Unsloth UD quants) all work natively. vLLM supports some KV cache quantization but not the aggressive GGUF formats; if you want to run a heavily quantized model on one consumer GPU, llama.cpp is the right tool.</p>
+      <table>
+        <tr>
+          <th style="width:120px">Tool</th>
+          <th>What it is</th>
+          <th>Typical use</th>
+        </tr>
+        <tr>
+          <td><strong>llama.cpp</strong></td>
+          <td class="dim">Low-level inference engine. Loads a <code>.gguf</code> model file and runs it — on CPU, NVIDIA GPU, AMD GPU, or Apple Silicon. The engine that actually does the math. Supports the full range of quantized formats (Q4, Q3, TurboQuant, Unsloth UD). Can be run as a command-line tool or as a local HTTP server (<code>llama-server</code>) that speaks the OpenAI API format.</td>
+          <td class="dim">Running any quantized model on consumer hardware. Home GPU server. Direct CLI inference.</td>
+        </tr>
+        <tr>
+          <td><strong>vLLM</strong></td>
+          <td class="dim">High-throughput inference server for NVIDIA GPUs. Uses HuggingFace model format (FP16/FP8, not .gguf). Optimised to serve many concurrent users efficiently — it batches requests together so the GPU stays busy. Much more memory-hungry; not suited for heavily quantized or consumer-grade setups.</td>
+          <td class="dim">Production API serving. Startups/companies running a model for many users at once. Datacenter deployments.</td>
+        </tr>
+        <tr>
+          <td><strong>Ollama</strong></td>
+          <td class="dim">A wrapper around llama.cpp that makes it dramatically easier to use. One command downloads a model and starts serving it: <code>ollama run llama3</code>. Manages model files, updates, and the server lifecycle for you. Exposes the same OpenAI-compatible API as llama.cpp's server mode. Think of it as llama.cpp with a friendly installer and model manager built in.</td>
+          <td class="dim">Quickest way to get a local model running with zero config. Desktop AI assistants (Open WebUI, etc.). Teams that don't want to manage raw llama.cpp.</td>
+        </tr>
+        <tr>
+          <td><strong>LiteLLM</strong></td>
+          <td class="dim">A proxy / routing layer that sits <em>in front of</em> any LLM backend and translates everything into the OpenAI API format. Point it at Ollama, llama.cpp, vLLM, a cloud API (Anthropic, Gemini, etc.) — your app only needs to know one API. Also handles load balancing, fallback between providers, cost tracking, and rate limits.</td>
+          <td class="dim">When you want your app to be backend-agnostic. Switching between local and cloud models without code changes. Multi-provider setups.</td>
+        </tr>
+      </table>
 
       <div class="callout">
-        <strong>Running llama.cpp as a server:</strong> <code>llama-server</code> mode exposes an OpenAI-compatible API endpoint. Any app that can talk to the OpenAI API can point at <code>http://localhost:8080</code> and use your local model instead — no code changes needed on the app side.
+        <strong>The typical home stack:</strong> llama.cpp (or Ollama on top of it) runs the model → exposes <code>http://localhost:11434</code> (Ollama) or <code>:8080</code> (llama-server) → any chat UI or agent framework points at that address as if it were the OpenAI API. LiteLLM sits in the middle if you also want to fall back to cloud models when the local GPU is busy.
       </div>
 
       <p class="learn-more">
-        → <a href="https://github.com/ggerganov/llama.cpp" target="_blank" rel="noopener noreferrer">llama.cpp on GitHub</a> ·
-        <a href="https://github.com/vllm-project/vllm" target="_blank" rel="noopener noreferrer">vLLM on GitHub</a> ·
-        <a href="https://github.com/ml-explore/mlx" target="_blank" rel="noopener noreferrer">MLX</a> (Apple-native alternative)
+        → <a href="https://github.com/ggerganov/llama.cpp" target="_blank" rel="noopener noreferrer">llama.cpp</a> ·
+        <a href="https://ollama.com" target="_blank" rel="noopener noreferrer">Ollama</a> ·
+        <a href="https://github.com/vllm-project/vllm" target="_blank" rel="noopener noreferrer">vLLM</a> ·
+        <a href="https://github.com/BerriAI/litellm" target="_blank" rel="noopener noreferrer">LiteLLM</a>
       </p>
     </div>
   </div>
