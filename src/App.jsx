@@ -981,6 +981,13 @@ function CompareTable({ items, totalVRAM, runtimeMonths, electricityRate, prompt
   );
 }
 
+function deduplicateName(name, existing) {
+  if (!existing.includes(name)) return name;
+  let n = 2;
+  while (existing.includes(`${name} (${n})`)) n++;
+  return `${name} (${n})`;
+}
+
 const LS_KEY = 'selfsilicon-v1';
 function loadSaved() {
   try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; }
@@ -1007,6 +1014,7 @@ export default function App() {
   const [compareMode, setCompareMode] = useState(false);
   const [compareSelected, setCompareSelected] = useState(new Set());
   const [hwMode, setHwMode] = useState(saved.hwMode ?? 'inference');
+  const [favorites, setFavorites] = useState(saved.favorites ?? []);
 
   // Persist state to localStorage on every meaningful change (not transient UI like search/compare)
   useEffect(() => {
@@ -1014,12 +1022,23 @@ export default function App() {
       localStorage.setItem(LS_KEY, JSON.stringify({
         models, calcMode, concurrent, vendorFilter, categoryFilter,
         runtimeMonths, electricityRate, sortBy, promptTokens, outputTokens,
-        appleCluster, maxPrice, maxPriceEnabled, hwMode,
+        appleCluster, maxPrice, maxPriceEnabled, hwMode, favorites,
       }));
     } catch {}
   }, [models, calcMode, concurrent, vendorFilter, categoryFilter,
       runtimeMonths, electricityRate, sortBy, promptTokens, outputTokens,
-      appleCluster, maxPrice, maxPriceEnabled, hwMode]);
+      appleCluster, maxPrice, maxPriceEnabled, hwMode, favorites]);
+
+  const saveFavorite = (entry) => {
+    setFavorites(prev => {
+      const name = deduplicateName(entry.name, prev.map(f => f.name));
+      return [...prev, { ...entry, id: Date.now(), name }].slice(-8);
+    });
+  };
+
+  const deleteFavorite = (id) => {
+    setFavorites(prev => prev.filter(f => f.id !== id));
+  };
 
   const addModel = () => {
     setModels([...models, { id: Date.now(), name: '', params: 0, quant: 'fp16', context: 8192, source: null, activeParams: null }]);
@@ -1226,6 +1245,9 @@ export default function App() {
                 idx={i}
                 onUpdate={(u) => updateModel(m.id, u)}
                 onRemove={() => removeModel(m.id)}
+                favorites={favorites}
+                onSaveFavorite={saveFavorite}
+                onDeleteFavorite={deleteFavorite}
               />
             ))}
           </div>
