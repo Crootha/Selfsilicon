@@ -304,8 +304,8 @@ function ModelCard({ model, onUpdate, onRemove, idx, favorites = [], onSaveFavor
   const [trendingModels, setTrendingModels] = useState([]);
   const [loadingTrending, setLoadingTrending] = useState(false);
   const [selectedFamily, setSelectedFamily] = useState(null);
-  const [favName, setFavName] = useState('');
-  useEffect(() => { setFavName(''); }, [model.name]);
+  const [favName, setFavName] = useState(model.name);
+  useEffect(() => { setFavName(model.name); }, [model.name]);
 
   const fetchTrending = async () => {
     setLoadingTrending(true);
@@ -544,7 +544,7 @@ function ModelCard({ model, onUpdate, onRemove, idx, favorites = [], onSaveFavor
               </button>
             )}
           </div>
-          {selectedFamily && selectedFamily !== '__live__' && (
+          {selectedFamily && selectedFamily !== '__live__' && selectedFamily !== '__favs__' && (
             <div className="border border-neutral-800 bg-neutral-950 mb-2">
               {MODEL_FAMILIES[selectedFamily].map(id => {
                 const km = KNOWN_MODELS.find(m => m.id === id);
@@ -648,7 +648,7 @@ function ModelCard({ model, onUpdate, onRemove, idx, favorites = [], onSaveFavor
         <div className="mt-2 flex items-center gap-1.5">
           <input
             type="text"
-            value={favName || model.name}
+            value={favName}
             onChange={e => setFavName(e.target.value)}
             className="flex-1 min-w-0 bg-neutral-950 border border-neutral-700 px-2 py-1 text-xs text-neutral-200 font-mono focus:outline-none focus:border-amber-500/50"
           />
