@@ -681,7 +681,7 @@ function ModelCard({ model, onUpdate, onRemove, idx, favorites = [], onSaveFavor
   );
 }
 
-function VRAMBreakdownTooltip({ hw, totalVRAM, effectiveVRAM, needed, rawNeeded, maxStack, modelParams, modelQuant, modelActiveParams, modelContext }) {
+function VRAMBreakdownTooltip({ hw, totalVRAM, effectiveVRAM, needed, modelParams, modelQuant, modelActiveParams, modelContext }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const ref = useRef(null);
@@ -751,11 +751,6 @@ function VRAMBreakdownTooltip({ hw, totalVRAM, effectiveVRAM, needed, rawNeeded,
                 <span className="text-neutral-300">~{effectiveVRAM.toFixed(0)} GB</span>
               </div>
             )}
-            {rawNeeded > maxStack && (
-              <div className="text-neutral-600 text-[10px] pt-1">
-                would need {rawNeeded}×, capped at {maxStack}×
-              </div>
-            )}
           </div>
         </div>,
         document.body
@@ -770,10 +765,7 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
   // Apple machines: stack via EXO / llama.cpp RPC (only if appleCluster=true; performance penalty is severe)
   // DGX systems: already a box, can't be further stacked here
   const canMultiGPU = (hw.vendor === 'NVIDIA' && hw.category !== 'dgx') || (hw.vendor === 'Apple' && appleCluster);
-  const rawNeeded = totalVRAM > 0 ? Math.ceil(totalVRAM / hw.vram) : 1;
-  // Realistic PCIe slot limits: gaming boards fit 4 cards max; server/workstation boards ~8.
-  const maxStack = hw.category === 'gaming' ? 4 : 8;
-  const needed = canMultiGPU ? Math.min(rawNeeded, maxStack) : 1;
+  const needed = canMultiGPU && totalVRAM > 0 ? Math.ceil(totalVRAM / hw.vram) : 1;
   const fits = canMultiGPU ? true : hw.vram >= totalVRAM;
   // VRAM loss per extra unit:
   //   NVIDIA tensor parallelism: ~10% per extra GPU (NVLink/PCIe overhead)
@@ -825,7 +817,7 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
       <div className="lg:hidden border-b border-neutral-800 px-4 py-3">
         <div className="flex items-start justify-between mb-1.5">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            {!reallyFits && <VRAMBreakdownTooltip hw={hw} totalVRAM={totalVRAM} effectiveVRAM={effectiveVRAM} needed={needed} rawNeeded={rawNeeded} maxStack={maxStack} modelParams={modelParams} modelQuant={modelQuant} modelActiveParams={modelActiveParams} modelContext={modelContext} />}
+            {!reallyFits && <VRAMBreakdownTooltip hw={hw} totalVRAM={totalVRAM} effectiveVRAM={effectiveVRAM} needed={needed} modelParams={modelParams} modelQuant={modelQuant} modelActiveParams={modelActiveParams} modelContext={modelContext} />}
             {needed > 1 && (
               <span className="inline-flex items-center justify-center bg-amber-500 text-neutral-950 font-mono text-xs px-1.5 py-0.5 font-bold flex-shrink-0">
                 {needed}×
@@ -921,7 +913,7 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
       {/* Desktop table row (≥ lg) */}
       <div className="hidden lg:grid grid-cols-12 gap-2 px-3 py-2.5 border-b border-neutral-800 text-sm items-center">
         <div className="col-span-2 flex items-center gap-2">
-          {!reallyFits && <VRAMBreakdownTooltip hw={hw} totalVRAM={totalVRAM} effectiveVRAM={effectiveVRAM} needed={needed} rawNeeded={rawNeeded} maxStack={maxStack} modelParams={modelParams} modelQuant={modelQuant} modelActiveParams={modelActiveParams} modelContext={modelContext} />}
+          {!reallyFits && <VRAMBreakdownTooltip hw={hw} totalVRAM={totalVRAM} effectiveVRAM={effectiveVRAM} needed={needed} modelParams={modelParams} modelQuant={modelQuant} modelActiveParams={modelActiveParams} modelContext={modelContext} />}
           <div className="min-w-0 flex-1">
             <div className="font-serif text-neutral-100 flex items-center gap-2">
               {needed > 1 && (
@@ -1024,8 +1016,7 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
 function CompareTable({ items, totalVRAM, runtimeMonths, electricityRate, promptTokens, outputTokens, primaryModel, appleCluster, onClose, onRemove }) {
   const stats = items.map(hw => {
     const canStack = (hw.vendor === 'NVIDIA' && hw.category !== 'dgx') || (hw.vendor === 'Apple' && appleCluster);
-    const maxStack = hw.category === 'gaming' ? 4 : 8;
-    const needed = canStack && totalVRAM > 0 ? Math.min(Math.ceil(totalVRAM / hw.vram), maxStack) : 1;
+    const needed = canStack && totalVRAM > 0 ? Math.ceil(totalVRAM / hw.vram) : 1;
     const vramOverhead = hw.vendor === 'Apple' ? 0.15 : 0.1;
     const effectiveVRAM = hw.vram * needed * (needed === 1 ? 1 : 1 - vramOverhead * (needed - 1) / needed);
     const reallyFits = effectiveVRAM >= totalVRAM;
