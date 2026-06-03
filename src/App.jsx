@@ -154,11 +154,12 @@ function paramsFromName(name) {
 }
 
 // VRAM calculation
-function calcVRAM(params, quantId, context, mode, batchSize = 1) {
+// activeParams: for MoE models, the active params per token (used to correct nLayers estimate)
+function calcVRAM(params, quantId, context, mode, batchSize = 1, activeParams = null) {
   const quant = QUANT_OPTIONS.find(q => q.id === quantId) || QUANT_OPTIONS[0];
   // model weights (in GB)
   const weights = (params * 1e9 * quant.bytesPerParam) / 1e9;
-  
+
   if (mode === 'simple') {
     // simple: weights + 20% overhead
     return {
@@ -168,16 +169,26 @@ function calcVRAM(params, quantId, context, mode, batchSize = 1) {
       total: weights * 1.2,
     };
   }
-  
+
   // detailed: weights + KV cache + activation overhead
-  // KV cache: 2 (K+V) * n_layers * d_model * context * batch * bytes
-  // rough estimate: n_layers ~ scaling, using heuristic
-  const nLayers = Math.max(32, Math.round(Math.pow(params, 0.5) * 8));
-  const dModel = Math.max(2048, Math.round(Math.pow(params, 0.5) * 600));
+  //
+  // KV cache formula: 2 (K+V) × nLayers × kvDim × context × batch × 2 bytes (FP16)
+  //
+  // kvDim = num_kv_heads × head_dim. Modern models use GQA with far fewer KV heads than
+  // query heads (e.g. Llama/Qwen 70B: 8 KV heads × 128 head_dim = 1024). Using full dModel
+  // (~8192 for 70B) would be 8× too large. 1024 is a reliable constant for 7B–235B models.
+  //
+  // nLayers: for MoE models total params greatly exceed the attention architecture. A MoE
+  // with 235B total / 22B active behaves architecturally like a ~88B dense model for layer
+  // count. Cap at sqrt(min(params, activeParams×4)) × 8 to avoid absurd layer estimates.
+  const isMoE = activeParams != null && activeParams < params;
+  const layerParams = isMoE ? Math.min(params, activeParams * 4) : params;
+  const nLayers = Math.max(32, Math.round(Math.pow(layerParams, 0.5) * 8));
+  const kvDim = 1024; // 8 KV heads × 128 head_dim — standard GQA in modern LLMs
   // KV cache assumed FP16 (conservative upper bound).
   // llama.cpp --cache-type-k q8_0 / q4_0 can halve this; vLLM also supports KV quantization.
   const kvBytes = 2;
-  const kvCache = (2 * nLayers * dModel * context * batchSize * kvBytes) / 1e9;
+  const kvCache = (2 * nLayers * kvDim * context * batchSize * kvBytes) / 1e9;
   const overhead = weights * 0.1 + 1; // activations + framework
   
   return {
@@ -722,9 +733,26 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
   const totalCost = totalPrice + electricityCost;
   const links = getRetailerLinks(hw);
   const isAppleCluster = hw.vendor === 'Apple' && needed > 1;
-  const doesntFitTitle = needed > 1
-    ? `${needed}× stacked → ~${effectiveVRAM.toFixed(0)} GB effective (overhead) — still ${(totalVRAM - effectiveVRAM).toFixed(0)} GB short`
-    : `${hw.vram} GB VRAM, needs ${totalVRAM.toFixed(0)} GB`;
+  // Build a human-readable tooltip explaining why the row is greyed out
+  const doesntFitTitle = (() => {
+    const breakdown = modelParams
+      ? calcVRAM(modelParams, modelQuant, 0, 'detailed', 1, modelActiveParams) // context=0 for weights-only
+      : null;
+    const weightsStr = breakdown ? `${breakdown.weights.toFixed(0)} GB weights` : '';
+    // KV cache part: totalVRAM minus weights minus overhead
+    const kvStr = breakdown && totalVRAM > 0
+      ? ` + ${(totalVRAM - breakdown.weights - (breakdown.weights * 0.1 + 1)).toFixed(0)} GB KV cache`
+      : '';
+    const needsStr = totalVRAM > 0 ? `Needs ${totalVRAM.toFixed(0)} GB` : 'Not enough VRAM';
+    const breakdownStr = weightsStr ? ` (${weightsStr}${kvStr})` : '';
+    if (rawNeeded > maxStack) {
+      return `${needsStr}${breakdownStr} — requires ${rawNeeded}× GPUs, capped at ${maxStack}× (realistic limit). Use a higher-VRAM card.`;
+    }
+    if (needed > 1) {
+      return `${needsStr}${breakdownStr} — ${needed}× stacked gives ~${effectiveVRAM.toFixed(0)} GB effective after overhead, still ${(totalVRAM - effectiveVRAM).toFixed(0)} GB short.`;
+    }
+    return `${needsStr}${breakdownStr} — this card has ${hw.vram} GB.`;
+  })();
 
   return (
     <div className={reallyFits ? '' : 'opacity-40'}>
@@ -1116,7 +1144,7 @@ export default function App() {
   const vramBreakdown = useMemo(() => {
     return models.map(m => {
       if (!m.params) return null;
-      return calcVRAM(m.params, m.quant, m.context, calcMode);
+      return calcVRAM(m.params, m.quant, m.context, calcMode, 1, m.activeParams);
     });
   }, [models, calcMode]);
 

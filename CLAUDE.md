@@ -67,7 +67,7 @@ src/App.jsx
 
 - **Simple mode**: `totalVRAM = weights × 1.2` (20% overhead flat)
 - **Detailed mode**: `totalVRAM = weights + kvCache + (weights × 0.1 + 1)`
-- KV cache formula estimates `n_layers` and `d_model` from sqrt(params) — wrong for MoE and GQA models
+- KV cache formula: `2 × nLayers × kvDim × context × 2 bytes`. `kvDim = 1024` (standard GQA: 8 KV heads × 128 head_dim). `nLayers = max(32, sqrt(layerParams) × 8)` where for MoE `layerParams = min(params, activeParams × 4)` to avoid absurd counts from total MoE param mass.
 - **Decode** is memory-bandwidth-bound (efficiency 0.7 dense, 0.2 MoE)
 - **Prefill** is compute-bound (efficiency 0.3 — conservative)
 - Calibrated: Qwen 3.5 35B-A3B Q4 on Mac mini M4 ≈ 35 tok/s; H100 Llama 70B ≈ 30 tok/s
