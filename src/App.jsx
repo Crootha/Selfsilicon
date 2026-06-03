@@ -1158,6 +1158,7 @@ export default function App() {
   const [compareSelected, setCompareSelected] = useState(new Set());
   const [hwMode, setHwMode] = useState(saved.hwMode ?? 'inference');
   const [favorites, setFavorites] = useState(saved.favorites ?? []);
+  const [maxStackFilter, setMaxStackFilter] = useState(saved.maxStackFilter ?? 'any');
 
   // Persist state to localStorage on every meaningful change (not transient UI like search/compare)
   useEffect(() => {
@@ -1165,12 +1166,12 @@ export default function App() {
       localStorage.setItem(LS_KEY, JSON.stringify({
         models, calcMode, concurrent, vendorFilter, categoryFilter,
         runtimeMonths, electricityRate, sortBy, promptTokens, outputTokens,
-        appleCluster, maxPrice, maxPriceEnabled, hwMode, favorites,
+        appleCluster, maxPrice, maxPriceEnabled, hwMode, favorites, maxStackFilter,
       }));
     } catch {}
   }, [models, calcMode, concurrent, vendorFilter, categoryFilter,
       runtimeMonths, electricityRate, sortBy, promptTokens, outputTokens,
-      appleCluster, maxPrice, maxPriceEnabled, hwMode, favorites]);
+      appleCluster, maxPrice, maxPriceEnabled, hwMode, favorites, maxStackFilter]);
 
   const saveFavorite = (entry) => {
     setFavorites(prev => {
@@ -1239,6 +1240,9 @@ export default function App() {
       if (!canStack(h)) return 1;
       return totalVRAM > 0 ? Math.ceil(totalVRAM / h.vram) : 1;
     };
+    if (maxStackFilter !== 'any' && totalVRAM > 0) {
+      hw = hw.filter(h => neededCount(h) <= maxStackFilter);
+    }
     const fitsScaled = (h) => {
       if (canStack(h)) return true;
       return h.vram >= totalVRAM;
@@ -1280,7 +1284,7 @@ export default function App() {
       return 0;
     });
     return hw;
-  }, [vendorFilter, categoryFilter, sortBy, totalVRAM, runtimeMonths, electricityRate, promptTokens, outputTokens, primaryModel, appleCluster, hwSearch, maxPrice, maxPriceEnabled, hwMode]);
+  }, [vendorFilter, categoryFilter, sortBy, totalVRAM, runtimeMonths, electricityRate, promptTokens, outputTokens, primaryModel, appleCluster, hwSearch, maxPrice, maxPriceEnabled, hwMode, maxStackFilter]);
 
   // Items selected for side-by-side compare panel
   const compareItems = useMemo(() => {
@@ -1638,7 +1642,7 @@ export default function App() {
             ))}
           </select>
         </div>
-        {/* Filters — row 1: vendor + category */}
+        {/* Filters — row 1: vendor + category + stack */}
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-2">
           <div className="flex flex-wrap items-center gap-1">
             <span className="text-xs text-neutral-500 font-mono uppercase mr-1 flex-shrink-0">vendor:</span>
@@ -1661,6 +1665,18 @@ export default function App() {
                 className={`px-3 py-1 text-xs font-mono uppercase ${categoryFilter === c ? 'bg-amber-500 text-neutral-950' : 'border border-neutral-700 text-neutral-400'}`}
               >
                 {c}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="text-xs text-neutral-500 font-mono uppercase mr-1 flex-shrink-0">stacked:</span>
+            {[['any', 'any'], [1, '1×'], [2, '≤2×'], [4, '≤4×'], [8, '≤8×']].map(([val, label]) => (
+              <button
+                key={val}
+                onClick={() => setMaxStackFilter(val)}
+                className={`px-3 py-1 text-xs font-mono uppercase ${maxStackFilter === val ? 'bg-amber-500 text-neutral-950' : 'border border-neutral-700 text-neutral-400'}`}
+              >
+                {label}
               </button>
             ))}
           </div>
