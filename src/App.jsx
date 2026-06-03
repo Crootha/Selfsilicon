@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, Plus, X, Cpu, Zap, DollarSign, HardDrive, AlertTriangle, Loader2, TrendingUp, Calculator, ExternalLink, Info, Check } from 'lucide-react';
 
 // ============ DATA: GPU & APPLE ============
@@ -682,22 +683,40 @@ function ModelCard({ model, onUpdate, onRemove, idx, favorites = [], onSaveFavor
 
 function VRAMBreakdownTooltip({ hw, totalVRAM, effectiveVRAM, needed, rawNeeded, maxStack, modelParams, modelQuant, modelActiveParams, modelContext }) {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const ref = useRef(null);
+
   const quant = QUANT_OPTIONS.find(q => q.id === modelQuant) || QUANT_OPTIONS[0];
   const weights = modelParams ? (modelParams * 1e9 * quant.bytesPerParam) / 1e9 : 0;
   const overhead = weights * 0.1 + 1;
   const kvCache = Math.max(0, totalVRAM - weights - overhead);
   const ctxLabel = modelContext >= 131072 ? '128k' : modelContext >= 65536 ? '64k' : modelContext >= 32768 ? '32k' : modelContext >= 16384 ? '16k' : modelContext >= 8192 ? '8k' : modelContext >= 4096 ? '4k' : '2k';
 
+  const show = () => {
+    if (ref.current) {
+      const r = ref.current.getBoundingClientRect();
+      setPos({ top: r.bottom + 6, left: r.left });
+    }
+    setOpen(true);
+  };
+
   return (
-    <span
-      className="relative flex-shrink-0"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-      onClick={e => { e.stopPropagation(); setOpen(v => !v); }}
-    >
-      <AlertTriangle size={12} className="text-red-400 cursor-help" />
-      {open && (
-        <div className="absolute z-50 top-5 left-0 w-52 bg-neutral-900 border border-red-400/30 text-xs font-mono shadow-xl pointer-events-none">
+    <>
+      <span
+        ref={ref}
+        className="flex-shrink-0 cursor-help"
+        onMouseEnter={show}
+        onMouseLeave={() => setOpen(false)}
+        onClick={e => { e.stopPropagation(); open ? setOpen(false) : show(); }}
+      >
+        <AlertTriangle size={12} className="text-red-400" />
+      </span>
+      {open && createPortal(
+        <div
+          style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}
+          className="w-52 bg-neutral-900 border border-red-400/40 text-xs font-mono shadow-2xl pointer-events-none"
+          onMouseLeave={() => setOpen(false)}
+        >
           <div className="px-3 py-1.5 bg-red-400/10 border-b border-red-400/20 text-red-400 text-[10px] uppercase tracking-wider">
             ▲ doesn't fit
           </div>
@@ -738,9 +757,10 @@ function VRAMBreakdownTooltip({ hw, totalVRAM, effectiveVRAM, needed, rawNeeded,
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </span>
+    </>
   );
 }
 
