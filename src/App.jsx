@@ -612,6 +612,7 @@ function ModelCard({ model, onUpdate, onRemove, idx, favorites = [], onSaveFavor
       )}
 
       {model.name && (
+        <>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <div>
             <label className="text-xs text-neutral-500 block mb-1 font-mono uppercase">Quantization <TooltipIcon text="Bits used per weight. Lower = smaller & faster, slightly less accurate. INT4/Q4 is the sweet spot for most local use. FP16 = full quality, 2× the VRAM." /></label>
@@ -662,6 +663,7 @@ function ModelCard({ model, onUpdate, onRemove, idx, favorites = [], onSaveFavor
           </button>
         </div>
         <div className="text-[10px] text-neutral-600 mt-1 mb-1">saves model + quant + context · max 8</div>
+        </>
       )}
     </div>
   );
