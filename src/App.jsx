@@ -294,7 +294,7 @@ function TooltipIcon({ text }) {
   );
 }
 
-function ModelCard({ model, onUpdate, onRemove, idx }) {
+function ModelCard({ model, onUpdate, onRemove, idx, favorites = [], onSaveFavorite, onDeleteFavorite }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -304,6 +304,8 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
   const [trendingModels, setTrendingModels] = useState([]);
   const [loadingTrending, setLoadingTrending] = useState(false);
   const [selectedFamily, setSelectedFamily] = useState(null);
+  const [favName, setFavName] = useState('');
+  useEffect(() => { setFavName(''); }, [model.name]);
 
   const fetchTrending = async () => {
     setLoadingTrending(true);
@@ -533,6 +535,14 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
                 Live ↻
               </button>
             )}
+            {favorites.length > 0 && (
+              <button
+                onClick={() => setSelectedFamily(selectedFamily === '__favs__' ? null : '__favs__')}
+                className={`text-xs font-mono uppercase px-2.5 py-1 border transition-colors ${selectedFamily === '__favs__' ? 'bg-amber-500 text-neutral-950 border-amber-500' : 'border-amber-500/50 text-amber-500/70 hover:border-amber-500 hover:text-amber-500'}`}
+              >
+                ★ Favs ({favorites.length})
+              </button>
+            )}
           </div>
           {selectedFamily && selectedFamily !== '__live__' && (
             <div className="border border-neutral-800 bg-neutral-950 mb-2">
@@ -570,6 +580,34 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
               ))}
             </div>
           )}
+          {selectedFamily === '__favs__' && favorites.length > 0 && (
+            <div className="border border-neutral-800 bg-neutral-950 mb-2">
+              {favorites.map(f => (
+                <div key={f.id} className="flex items-center border-b border-neutral-800 last:border-b-0 hover:bg-neutral-800 transition-colors">
+                  <button
+                    onClick={() => {
+                      onUpdate({ ...model, name: f.modelName, params: f.params, activeParams: f.activeParams, source: f.source, quant: f.quant, context: f.context });
+                      setSelectedFamily(null);
+                      setFavName(f.name);
+                    }}
+                    className="flex-1 flex items-center justify-between px-3 py-2 text-xs text-left"
+                  >
+                    <span className="text-neutral-200">{f.name}</span>
+                    <span className="text-neutral-500 flex-shrink-0 ml-3">
+                      {f.quant.toUpperCase()} · {f.context >= 65536 ? '64k' : f.context >= 32768 ? '32k' : f.context >= 16384 ? '16k' : f.context >= 8192 ? '8k' : f.context >= 4096 ? '4k' : '2k'}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => onDeleteFavorite(f.id)}
+                    className="px-3 py-2 text-neutral-700 hover:text-red-400 transition-colors text-sm flex-shrink-0"
+                    title="Remove favorite"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -604,6 +642,26 @@ function ModelCard({ model, onUpdate, onRemove, idx }) {
             </select>
           </div>
         </div>
+
+        {/* Favorites save bar */}
+        <div className="mt-2 flex items-center gap-1.5">
+          <input
+            type="text"
+            value={favName || model.name}
+            onChange={e => setFavName(e.target.value)}
+            className="flex-1 min-w-0 bg-neutral-950 border border-neutral-700 px-2 py-1 text-xs text-neutral-200 font-mono focus:outline-none focus:border-amber-500/50"
+          />
+          <button
+            onClick={() => {
+              onSaveFavorite({ name: (favName || model.name).trim() || model.name, modelName: model.name, params: model.params, activeParams: model.activeParams ?? null, source: model.source, quant: model.quant, context: model.context });
+              setFavName('');
+            }}
+            className="px-2 py-1 bg-amber-500 text-neutral-950 text-xs font-mono uppercase hover:bg-amber-400 transition-colors flex-shrink-0 whitespace-nowrap"
+          >
+            ★ save
+          </button>
+        </div>
+        <div className="text-[10px] text-neutral-600 mt-1 mb-1">saves model + quant + context · max 8</div>
       )}
     </div>
   );
