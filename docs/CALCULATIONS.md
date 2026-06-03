@@ -49,19 +49,25 @@ kv_cache_GB = (2 × n_layers × d_model × context × batch × 2) / 10⁹
 
 The two 2's are: K + V (factor of 2), and FP16 storage (2 bytes). KV cache is almost always kept in FP16 even if the weights are INT4 — quantizing it hurts quality more than it helps memory.
 
-The catch: we don't know `n_layers` or `d_model` without fetching each model's config. So we estimate them from the parameter count using rough scaling:
+The catch: we don't know `n_layers` or the KV head count without fetching each model's config. So we estimate:
 
 ```js
-n_layers = max(32, round(sqrt(params) × 8))
-d_model  = max(2048, round(sqrt(params) × 600))
+// Modern models use GQA — far fewer KV heads than query heads.
+// Llama/Qwen 70B: 8 KV heads × 128 head_dim = 1024. Using full d_model (~8192) is 8× too large.
+kv_dim   = 1024   // constant: 8 KV heads × 128 head_dim, reliable for 7B–235B models
+
+// For MoE, total params far exceed the attention architecture.
+// Qwen 3.5 235B-A22B behaves like a ~88B dense model for layer count.
+layer_params = isMoE ? min(params, activeParams × 4) : params
+n_layers     = max(32, round(sqrt(layer_params) × 8))
 ```
 
-These are loose fits to actual Llama/Mistral/Qwen architectures. They're correct within ~30% for most modern decoder-only LLMs. **They are wrong** for unusual architectures (sparse MoE, multi-query attention with very wide d_model, etc.). For example:
+Calibration:
+- Llama 3 70B (80 layers real): formula gives `n_layers≈68` → KV at 128k ≈ 36 GB (real ≈ 43 GB, within 20%).
+- Qwen 3.5 72B (80 layers, 8 KV heads real): same architecture → same result.
+- Qwen 3.5 235B-A22B MoE (22B active): `layer_params = min(235, 88) = 88` → `n_layers≈75` → KV at 128k ≈ 40 GB.
 
-- Mixtral 8x7B (47B params): formula gives `n_layers≈55, d_model≈4115`. Actual: 32 layers, 4096 d_model. KV cache is overestimated by ~70%.
-- Llama 3 70B: formula gives `n_layers≈67, d_model≈5020`. Actual: 80 layers, 8192 d_model. KV cache is underestimated by ~30%.
-
-If precise KV math matters to you, hardcode the actual `n_layers` and `d_model` in the model record. The structure supports this; we just don't fetch it.
+The old formula used `d_model ≈ sqrt(params) × 600` (full multi-head attention), which overestimated by 4–8× for GQA models and produced wildly inflated KV cache for large MoE models at long context.
 
 **Overhead** is everything else: activations, CUDA kernels loaded into VRAM, framework allocator fragmentation:
 

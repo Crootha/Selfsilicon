@@ -31,3 +31,6 @@ Thumbs.db
 
 # Temp
 tmp/
+
+# Internal dev docs (plans, specs, brainstorm sessions)
+docs/superpowers/

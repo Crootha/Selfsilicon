@@ -9,14 +9,14 @@ The `HARDWARE` array is the source of truth for what gets shown in the compariso
 ```js
 {
   id: 'rtx4090',           // unique key, used for React keys
-  vendor: 'NVIDIA',        // 'NVIDIA' | 'Apple'
+  vendor: 'NVIDIA',        // 'NVIDIA' | 'AMD' | 'Apple'
   name: 'RTX 4090',        // display name
   vram: 24,                // GB
   price: 1800,             // USD, approximate
   tflops_fp16: 165,        // TFLOPS at FP16 precision
   bandwidth_gbs: 1008,     // memory bandwidth in GB/s
   power: 450,              // watts at full load
-  category: 'consumer',    // 'consumer' | 'workstation' | 'datacenter' | 'dgx' | 'apple'
+  category: 'gaming',      // 'gaming' | 'workstation' | 'datacenter' | 'dgx' | 'apple'
 }
 ```
 

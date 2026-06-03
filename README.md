@@ -1,6 +1,6 @@
 # GPU / VRAM / Cost Calculator
 
-Compare GPU costs for running AI models. NVIDIA vs Apple Silicon.
+Compare GPU costs for running AI models locally. NVIDIA, AMD, and Apple Silicon.
 
 ## Quick start (local dev)
 

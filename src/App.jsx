@@ -681,15 +681,23 @@ function ModelCard({ model, onUpdate, onRemove, idx, favorites = [], onSaveFavor
   );
 }
 
-function VRAMBreakdownTooltip({ hw, totalVRAM, effectiveVRAM, needed, modelParams, modelQuant, modelActiveParams, modelContext }) {
+function VRAMBreakdownTooltip({ hw, totalVRAM, effectiveVRAM, needed, modelParams, modelQuant, modelActiveParams, modelContext, calcMode, modelsCount }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const ref = useRef(null);
 
-  const quant = QUANT_OPTIONS.find(q => q.id === modelQuant) || QUANT_OPTIONS[0];
-  const weights = modelParams ? (modelParams * 1e9 * quant.bytesPerParam) / 1e9 : 0;
-  const overhead = weights * 0.1 + 1;
-  const kvCache = Math.max(0, totalVRAM - weights - overhead);
+  // Use calcVRAM directly so the breakdown is always consistent with the actual formula.
+  // Pass the real context so KV cache matches what was computed upstream.
+  const breakdown = modelParams
+    ? calcVRAM(modelParams, modelQuant, modelContext, calcMode ?? 'detailed', 1, modelActiveParams)
+    : null;
+  const weights = breakdown?.weights ?? 0;
+  const kvCache = breakdown?.kvCache ?? 0;
+  const overhead = breakdown?.overhead ?? 0;
+  const multiModel = (modelsCount ?? 1) > 1;
+  // totalVRAM is the app-level sum (all concurrent models). For display we show the primary
+  // model's own total when running solo, or the app total with a note when running concurrent.
+  const displayTotal = multiModel ? totalVRAM : (breakdown?.total ?? totalVRAM);
   const ctxLabel = modelContext >= 131072 ? '128k' : modelContext >= 65536 ? '64k' : modelContext >= 32768 ? '32k' : modelContext >= 16384 ? '16k' : modelContext >= 8192 ? '8k' : modelContext >= 4096 ? '4k' : '2k';
 
   const show = () => {
@@ -715,7 +723,6 @@ function VRAMBreakdownTooltip({ hw, totalVRAM, effectiveVRAM, needed, modelParam
         <div
           style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}
           className="w-52 bg-neutral-900 border border-red-400/40 text-xs font-mono shadow-2xl pointer-events-none"
-          onMouseLeave={() => setOpen(false)}
         >
           <div className="px-3 py-1.5 bg-red-400/10 border-b border-red-400/20 text-red-400 text-[10px] uppercase tracking-wider">
             ▲ doesn't fit
@@ -736,8 +743,11 @@ function VRAMBreakdownTooltip({ hw, totalVRAM, effectiveVRAM, needed, modelParam
               </div>
               <div className="flex justify-between pt-1 border-t border-neutral-800">
                 <span className="text-neutral-400 font-medium">total needed</span>
-                <span className="text-red-400 font-medium">{totalVRAM.toFixed(0)} GB</span>
+                <span className="text-red-400 font-medium">{displayTotal.toFixed(0)} GB</span>
               </div>
+              {multiModel && (
+                <div className="text-neutral-600 text-[10px]">primary model + {modelsCount - 1} more</div>
+              )}
             </div>
           )}
           <div className="px-3 py-2 space-y-1">
@@ -759,14 +769,13 @@ function VRAMBreakdownTooltip({ hw, totalVRAM, effectiveVRAM, needed, modelParam
   );
 }
 
-function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRate, promptTokens, outputTokens, modelParams, modelQuant, modelActiveParams, modelContext, appleCluster, hwMode, compareMode, isSelected, canSelect, onToggleSelect }) {
+function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRate, promptTokens, outputTokens, modelParams, modelQuant, modelActiveParams, modelContext, calcMode, appleCluster, hwMode, compareMode, isSelected, canSelect, onToggleSelect }) {
   // How many units of this HW are needed to fit the model(s)?
   // NVIDIA standalone cards: stack via tensor parallelism
   // Apple machines: stack via EXO / llama.cpp RPC (only if appleCluster=true; performance penalty is severe)
   // DGX systems: already a box, can't be further stacked here
   const canMultiGPU = (hw.vendor === 'NVIDIA' && hw.category !== 'dgx') || (hw.vendor === 'Apple' && appleCluster);
   const needed = canMultiGPU && totalVRAM > 0 ? Math.ceil(totalVRAM / hw.vram) : 1;
-  const fits = canMultiGPU ? true : hw.vram >= totalVRAM;
   // VRAM loss per extra unit:
   //   NVIDIA tensor parallelism: ~10% per extra GPU (NVLink/PCIe overhead)
   //   Apple cluster (Thunderbolt/Ethernet): ~15% per extra machine (replication, framework state)
@@ -817,7 +826,7 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
       <div className="lg:hidden border-b border-neutral-800 px-4 py-3">
         <div className="flex items-start justify-between mb-1.5">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            {!reallyFits && <VRAMBreakdownTooltip hw={hw} totalVRAM={totalVRAM} effectiveVRAM={effectiveVRAM} needed={needed} modelParams={modelParams} modelQuant={modelQuant} modelActiveParams={modelActiveParams} modelContext={modelContext} />}
+            {!reallyFits && <VRAMBreakdownTooltip hw={hw} totalVRAM={totalVRAM} effectiveVRAM={effectiveVRAM} needed={needed} modelParams={modelParams} modelQuant={modelQuant} modelActiveParams={modelActiveParams} modelContext={modelContext} calcMode={calcMode} modelsCount={modelsCount} />}
             {needed > 1 && (
               <span className="inline-flex items-center justify-center bg-amber-500 text-neutral-950 font-mono text-xs px-1.5 py-0.5 font-bold flex-shrink-0">
                 {needed}×
@@ -913,7 +922,7 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
       {/* Desktop table row (≥ lg) */}
       <div className="hidden lg:grid grid-cols-12 gap-2 px-3 py-2.5 border-b border-neutral-800 text-sm items-center">
         <div className="col-span-2 flex items-center gap-2">
-          {!reallyFits && <VRAMBreakdownTooltip hw={hw} totalVRAM={totalVRAM} effectiveVRAM={effectiveVRAM} needed={needed} modelParams={modelParams} modelQuant={modelQuant} modelActiveParams={modelActiveParams} modelContext={modelContext} />}
+          {!reallyFits && <VRAMBreakdownTooltip hw={hw} totalVRAM={totalVRAM} effectiveVRAM={effectiveVRAM} needed={needed} modelParams={modelParams} modelQuant={modelQuant} modelActiveParams={modelActiveParams} modelContext={modelContext} calcMode={calcMode} modelsCount={modelsCount} />}
           <div className="min-w-0 flex-1">
             <div className="font-serif text-neutral-100 flex items-center gap-2">
               {needed > 1 && (
@@ -1846,6 +1855,7 @@ export default function App() {
                 modelQuant={primaryModel ? primaryModel.quant : 'fp16'}
                 modelActiveParams={primaryModel ? primaryModel.activeParams : null}
                 modelContext={primaryModel ? primaryModel.context : 8192}
+                calcMode={calcMode}
                 appleCluster={appleCluster}
                 hwMode={hwMode}
                 compareMode={compareMode}
