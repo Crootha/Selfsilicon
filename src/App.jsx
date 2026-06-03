@@ -680,7 +680,71 @@ function ModelCard({ model, onUpdate, onRemove, idx, favorites = [], onSaveFavor
   );
 }
 
-function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRate, promptTokens, outputTokens, modelParams, modelQuant, modelActiveParams, appleCluster, hwMode, compareMode, isSelected, canSelect, onToggleSelect }) {
+function VRAMBreakdownTooltip({ hw, totalVRAM, effectiveVRAM, needed, rawNeeded, maxStack, modelParams, modelQuant, modelActiveParams, modelContext }) {
+  const [open, setOpen] = useState(false);
+  const quant = QUANT_OPTIONS.find(q => q.id === modelQuant) || QUANT_OPTIONS[0];
+  const weights = modelParams ? (modelParams * 1e9 * quant.bytesPerParam) / 1e9 : 0;
+  const overhead = weights * 0.1 + 1;
+  const kvCache = Math.max(0, totalVRAM - weights - overhead);
+  const ctxLabel = modelContext >= 131072 ? '128k' : modelContext >= 65536 ? '64k' : modelContext >= 32768 ? '32k' : modelContext >= 16384 ? '16k' : modelContext >= 8192 ? '8k' : modelContext >= 4096 ? '4k' : '2k';
+
+  return (
+    <span
+      className="relative flex-shrink-0"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onClick={e => { e.stopPropagation(); setOpen(v => !v); }}
+    >
+      <AlertTriangle size={12} className="text-red-400 cursor-help" />
+      {open && (
+        <div className="absolute z-50 top-5 left-0 w-52 bg-neutral-900 border border-red-400/30 text-xs font-mono shadow-xl pointer-events-none">
+          <div className="px-3 py-1.5 bg-red-400/10 border-b border-red-400/20 text-red-400 text-[10px] uppercase tracking-wider">
+            ▲ doesn't fit
+          </div>
+          {modelParams > 0 && (
+            <div className="px-3 py-2 space-y-1 border-b border-neutral-800">
+              <div className="flex justify-between">
+                <span className="text-neutral-500">weights</span>
+                <span className="text-neutral-300">{weights.toFixed(0)} GB</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-500">KV cache ({ctxLabel})</span>
+                <span className="text-neutral-300">{kvCache.toFixed(0)} GB</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-500">overhead</span>
+                <span className="text-neutral-300">{overhead.toFixed(0)} GB</span>
+              </div>
+              <div className="flex justify-between pt-1 border-t border-neutral-800">
+                <span className="text-neutral-400 font-medium">total needed</span>
+                <span className="text-red-400 font-medium">{totalVRAM.toFixed(0)} GB</span>
+              </div>
+            </div>
+          )}
+          <div className="px-3 py-2 space-y-1">
+            <div className="flex justify-between">
+              <span className="text-neutral-500">this card</span>
+              <span className="text-neutral-300">{hw.vram} GB</span>
+            </div>
+            {needed > 1 && (
+              <div className="flex justify-between">
+                <span className="text-neutral-500">{needed}× stacked</span>
+                <span className="text-neutral-300">~{effectiveVRAM.toFixed(0)} GB</span>
+              </div>
+            )}
+            {rawNeeded > maxStack && (
+              <div className="text-neutral-600 text-[10px] pt-1">
+                would need {rawNeeded}×, capped at {maxStack}×
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </span>
+  );
+}
+
+function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRate, promptTokens, outputTokens, modelParams, modelQuant, modelActiveParams, modelContext, appleCluster, hwMode, compareMode, isSelected, canSelect, onToggleSelect }) {
   // How many units of this HW are needed to fit the model(s)?
   // NVIDIA standalone cards: stack via tensor parallelism
   // Apple machines: stack via EXO / llama.cpp RPC (only if appleCluster=true; performance penalty is severe)
@@ -733,26 +797,6 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
   const totalCost = totalPrice + electricityCost;
   const links = getRetailerLinks(hw);
   const isAppleCluster = hw.vendor === 'Apple' && needed > 1;
-  // Build a human-readable tooltip explaining why the row is greyed out
-  const doesntFitTitle = (() => {
-    const breakdown = modelParams
-      ? calcVRAM(modelParams, modelQuant, 0, 'detailed', 1, modelActiveParams) // context=0 for weights-only
-      : null;
-    const weightsStr = breakdown ? `${breakdown.weights.toFixed(0)} GB weights` : '';
-    // KV cache part: totalVRAM minus weights minus overhead
-    const kvStr = breakdown && totalVRAM > 0
-      ? ` + ${(totalVRAM - breakdown.weights - (breakdown.weights * 0.1 + 1)).toFixed(0)} GB KV cache`
-      : '';
-    const needsStr = totalVRAM > 0 ? `Needs ${totalVRAM.toFixed(0)} GB` : 'Not enough VRAM';
-    const breakdownStr = weightsStr ? ` (${weightsStr}${kvStr})` : '';
-    if (rawNeeded > maxStack) {
-      return `${needsStr}${breakdownStr} — requires ${rawNeeded}× GPUs, capped at ${maxStack}× (realistic limit). Use a higher-VRAM card.`;
-    }
-    if (needed > 1) {
-      return `${needsStr}${breakdownStr} — ${needed}× stacked gives ~${effectiveVRAM.toFixed(0)} GB effective after overhead, still ${(totalVRAM - effectiveVRAM).toFixed(0)} GB short.`;
-    }
-    return `${needsStr}${breakdownStr} — this card has ${hw.vram} GB.`;
-  })();
 
   return (
     <div className={reallyFits ? '' : 'opacity-40'}>
@@ -761,7 +805,7 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
       <div className="lg:hidden border-b border-neutral-800 px-4 py-3">
         <div className="flex items-start justify-between mb-1.5">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            {!reallyFits && <AlertTriangle size={12} className="text-red-400 flex-shrink-0" title={doesntFitTitle} />}
+            {!reallyFits && <VRAMBreakdownTooltip hw={hw} totalVRAM={totalVRAM} effectiveVRAM={effectiveVRAM} needed={needed} rawNeeded={rawNeeded} maxStack={maxStack} modelParams={modelParams} modelQuant={modelQuant} modelActiveParams={modelActiveParams} modelContext={modelContext} />}
             {needed > 1 && (
               <span className="inline-flex items-center justify-center bg-amber-500 text-neutral-950 font-mono text-xs px-1.5 py-0.5 font-bold flex-shrink-0">
                 {needed}×
@@ -857,7 +901,7 @@ function HardwareRow({ hw, totalVRAM, modelsCount, runtimeMonths, electricityRat
       {/* Desktop table row (≥ lg) */}
       <div className="hidden lg:grid grid-cols-12 gap-2 px-3 py-2.5 border-b border-neutral-800 text-sm items-center">
         <div className="col-span-2 flex items-center gap-2">
-          {!reallyFits && <AlertTriangle size={12} className="text-red-400" title={doesntFitTitle} />}
+          {!reallyFits && <VRAMBreakdownTooltip hw={hw} totalVRAM={totalVRAM} effectiveVRAM={effectiveVRAM} needed={needed} rawNeeded={rawNeeded} maxStack={maxStack} modelParams={modelParams} modelQuant={modelQuant} modelActiveParams={modelActiveParams} modelContext={modelContext} />}
           <div className="min-w-0 flex-1">
             <div className="font-serif text-neutral-100 flex items-center gap-2">
               {needed > 1 && (
@@ -1774,6 +1818,7 @@ export default function App() {
                 modelParams={primaryModel ? primaryModel.params : 0}
                 modelQuant={primaryModel ? primaryModel.quant : 'fp16'}
                 modelActiveParams={primaryModel ? primaryModel.activeParams : null}
+                modelContext={primaryModel ? primaryModel.context : 8192}
                 appleCluster={appleCluster}
                 hwMode={hwMode}
                 compareMode={compareMode}
