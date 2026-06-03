@@ -147,14 +147,17 @@
     <a href="#context">Context window</a>
     <a href="#kvcache">KV cache</a>
     <a href="#kv-quant">Q4_K vs Q4_V</a>
+    <a href="#turboquant">TurboQuant</a>
     <a href="#tokens">Tokens</a>
     <a href="#moe">MoE</a>
     <a href="#prefill-decode">Prefill vs Decode</a>
+    <a href="#mtp">Speculative decoding / MTP</a>
     <a href="#inference-training">Inference vs Training</a>
     <a href="#multiGPU">Multi-GPU</a>
     <a href="#smart">What makes a model smart</a>
     <a href="#benchmarks">Benchmarks</a>
     <a href="#workstation-vs-gaming">Workstation vs Gaming GPU</a>
+    <a href="#runtimes">llama.cpp vs vLLM</a>
   </nav>
 
   <!-- ===== FUNDAMENTALS ===== -->
@@ -267,6 +270,23 @@ kv_cache_GB ≈ (2 × layers × d_model × context_tokens × batch × 2 bytes) /
     </div>
   </div>
 
+  <div class="concept" id="turboquant">
+    <div class="concept-header">
+      <span class="concept-id">05c</span>
+      <h2>TurboQuant — smarter KV cache compression</h2>
+    </div>
+    <div class="concept-body">
+      <p>Standard KV cache quantization (Q8/Q4) treats all values equally — it rounds every number by the same rule. <strong>TurboQuant</strong> (from a Google research paper, 2025) is a smarter algorithm that studies which parts of the cache actually matter for quality and rounds them less aggressively, while compressing the rest harder.</p>
+      <p>The practical result: the KV cache shrinks <strong>4–6× vs FP16</strong> — roughly 2× better than plain Q4_0 — without a noticeable drop in quality and without slowing generation down. On a 70B model at 128k context, that might take the KV cache from ~42 GB to ~7–10 GB.</p>
+      <div class="formula">
+llama-server --cache-type-k turbo3 --cache-type-v turbo3
+      </div>
+      <div class="callout">
+        <strong>Catch:</strong> TurboQuant is not in the official llama.cpp yet. It exists as a <em>fork</em> — a modified version maintained separately. Pre-built binaries for Windows exist on Hugging Face (search "llama.cpp turboquant build"); Linux users compile from source. The <code>turbo3</code> flag name may change as the feature matures and gets merged upstream.
+      </div>
+    </div>
+  </div>
+
   <div class="concept" id="tokens">
     <div class="concept-header">
       <span class="concept-id">06</span>
@@ -352,6 +372,44 @@ kv_cache_GB ≈ (2 × layers × d_model × context_tokens × batch × 2 bytes) /
         H100 80GB · Llama 3 70B FP16 · 2048-token prompt: ~250ms prefill, ~30 tok/s decode<br>
         Mac Studio M2 Ultra · Llama 70B Q4: ~12–18 tok/s decode<br>
         Mac mini M4 · Qwen 3.5 35B-A3B Q4: ~35 tok/s decode
+      </div>
+    </div>
+  </div>
+
+  <div class="concept" id="mtp">
+    <div class="concept-header">
+      <span class="concept-id">08b</span>
+      <h2>Speculative decoding &amp; MTP — faster token generation</h2>
+    </div>
+    <div class="concept-body">
+      <p>Normal generation produces one token per forward pass — the model reads everything, predicts one word, adds it, reads everything again. <strong>Speculative decoding</strong> breaks this bottleneck: a fast "draft" mechanism guesses several tokens ahead, and the main model verifies the whole batch in a single pass. Correct guesses are kept; wrong ones are discarded and generation resumes normally.</p>
+      <p>When the guesses are right (~70–90% of the time on natural text), you get multiple tokens for the cost of one pass. Net speedup: <strong>1.5–3× faster generation</strong> depending on model and text predictability.</p>
+
+      <div class="vs-grid">
+        <div class="vs-card">
+          <div class="vs-card-title" style="color:var(--accent);">Classic speculative decoding</div>
+          <ul>
+            <li>Separate small "draft" model guesses ahead</li>
+            <li>Large model verifies in batch</li>
+            <li>Requires two models loaded in VRAM</li>
+            <li>Draft model must match the large model's tokenizer</li>
+          </ul>
+        </div>
+        <div class="vs-card">
+          <div class="vs-card-title" style="color:var(--green);">MTP (Multi-Token Prediction)</div>
+          <ul>
+            <li>Extra prediction heads baked into the <em>same</em> model</li>
+            <li>No separate draft model needed</li>
+            <li>Trained in from the start — not a post-hoc add-on</li>
+            <li>Same VRAM, faster output (e.g. Qwen3.6-27B-MTP)</li>
+          </ul>
+        </div>
+      </div>
+
+      <p>MTP is an architectural feature — it shows up in the model name (e.g. <strong>Qwen3.6-27B-MTP</strong>). You enable it in llama.cpp with <code>--spec-type draft-mtp --spec-draft-n-max 2</code>, which tells the engine to use those extra heads to draft 2 tokens ahead per step.</p>
+      <div class="example">
+        <div class="example-label">Rule of thumb</div>
+        Speculative decoding helps most on <strong>repetitive or predictable text</strong> (code, structured output, long conversations). It helps least on highly creative or random output where the draft guesses wrong constantly.
       </div>
     </div>
   </div>
@@ -493,6 +551,56 @@ kv_cache_GB ≈ (2 × layers × d_model × context_tokens × batch × 2 bytes) /
         <a href="https://github.com/ml-explore/mlx" target="_blank" rel="noopener noreferrer">MLX</a> (Apple-native framework) ·
         <a href="https://github.com/vllm-project/vllm" target="_blank" rel="noopener noreferrer">vLLM</a> (NVIDIA production serving) ·
         <a href="https://www.youtube.com/watch?v=zjkBMFhNj_g" target="_blank" rel="noopener noreferrer">Karpathy: Intro to LLMs (YouTube)</a>
+      </p>
+    </div>
+  </div>
+
+  <hr>
+  <div class="section-title">▮ Tools &amp; runtimes</div>
+
+  <div class="concept" id="runtimes">
+    <div class="concept-header">
+      <span class="concept-id">14</span>
+      <h2>llama.cpp vs vLLM — which runtime and why</h2>
+    </div>
+    <div class="concept-body">
+      <p>Once you have a model, you need a <strong>runtime</strong> — a program that actually runs it. Think of it like a video player: the model is the movie file, the runtime is VLC. The two most common choices for local or small-team use are llama.cpp and vLLM, and they're built for very different situations.</p>
+
+      <div class="vs-grid">
+        <div class="vs-card">
+          <div class="vs-card-title" style="color:var(--accent);">llama.cpp</div>
+          <ul>
+            <li>Runs on CPU, GPU, Apple Silicon, or mixed</li>
+            <li>Uses <strong>.gguf</strong> model format (quantized-friendly)</li>
+            <li>Works on consumer hardware — 8 GB VRAM cards, laptops</li>
+            <li>Supports aggressive quantization (Q4, Q3, TurboQuant)</li>
+            <li>Lighter, easier to set up, wide model support</li>
+            <li>Good for: one GPU at home, tinkering, local assistants</li>
+          </ul>
+        </div>
+        <div class="vs-card">
+          <div class="vs-card-title" style="color:var(--blue);">vLLM</div>
+          <ul>
+            <li>NVIDIA GPU only (CUDA)</li>
+            <li>Uses <strong>HuggingFace / safetensors</strong> format</li>
+            <li>Designed for serving many users simultaneously</li>
+            <li>Needs more VRAM, prefers FP16 / FP8 models</li>
+            <li>Better throughput at scale; complex setup</li>
+            <li>Good for: production API, multi-user server</li>
+          </ul>
+        </div>
+      </div>
+
+      <p><strong>Why this matters for quantization:</strong> llama.cpp was built around quantized .gguf models from day one — Q4, Q3, TurboQuant, mixed-precision (Unsloth UD quants) all work natively. vLLM supports some KV cache quantization but not the aggressive GGUF formats; if you want to run a heavily quantized model on one consumer GPU, llama.cpp is the right tool.</p>
+
+      <div class="callout">
+        <strong>Running llama.cpp as a server:</strong> <code>llama-server</code> mode exposes an OpenAI-compatible API endpoint. Any app that can talk to the OpenAI API can point at <code>http://localhost:8080</code> and use your local model instead — no code changes needed on the app side.
+      </div>
+
+      <p class="learn-more">
+        → <a href="https://github.com/ggerganov/llama.cpp" target="_blank" rel="noopener noreferrer">llama.cpp on GitHub</a> ·
+        <a href="https://github.com/vllm-project/vllm" target="_blank" rel="noopener noreferrer">vLLM on GitHub</a> ·
+        <a href="https://github.com/ml-explore/mlx" target="_blank" rel="noopener noreferrer">MLX</a> (Apple-native alternative)
       </p>
     </div>
   </div>
