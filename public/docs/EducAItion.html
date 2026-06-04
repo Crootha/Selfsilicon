@@ -445,6 +445,10 @@ llama-server --cache-type-k turbo3 --cache-type-v turbo3
       </table>
       <p>The Apple clustering gap is dramatic because <strong>Thunderbolt 4 tops out at ~40 Gbps</strong>, while NVLink between H100s runs at ~7,200 Gbps — 180× faster. Per-layer activations must cross this link, which becomes the bottleneck.</p>
       <p><strong>DGX systems</strong> are pre-configured multi-GPU boxes: the DGX H100 packs 8 H100s with NVLink inside one server. They can't be further stacked in this calculator — you'd need a full datacenter fabric (InfiniBand) for that.</p>
+      <div class="callout">
+        <strong>PCIe x16 vs x8 — does slot width matter?</strong><br>
+        Consumer motherboards often run a second card at x8 instead of x16 (sharing the CPU's PCIe lanes). For AI inference, the difference is around <strong>10%</strong> — tensor parallelism needs to sync activations between GPUs each layer, and the bandwidth difference between x16 (32 GB/s bidirectional on PCIe 4.0) and x8 (16 GB/s) is noticeable but not catastrophic. For decode throughput — which is memory-bandwidth-bound within each card — PCIe slot width has no effect at all; it only matters for the inter-GPU sync during inference.
+      </div>
     </div>
   </div>
 
